@@ -3,23 +3,36 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProductStoreRequest extends FormRequest
 {
+    /**
+     * Tentukan apakah user diizinkan melakukan request ini.
+     */
     public function authorize(): bool
     {
-        // Ubah jadi true agar semua orang bisa (untuk sementara)
-        return true;
+        return true; // Izin utama biasanya diatur di middleware
     }
 
+    /**
+     * Aturan validasi untuk tambah produk baru.
+     * [Ref Proposal: Menambah informasi produk dan harga grosir]
+     */
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price_b2b' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'image_url' => 'nullable|string|url',
+            'nama_produk' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products', 'nama_produk'),
+            ],
+            'deskripsi' => 'required|string',
+            'harga_grosir' => 'required|numeric|min:0', // Sesuai kebutuhan harga B2B
+            'ketersediaan_stok' => 'required|integer|min:0',
+            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Validasi file gambar [cite: 101]
+            'status' => 'required|in:Aktif,Non Aktif',
         ];
     }
 }

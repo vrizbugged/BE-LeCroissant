@@ -26,7 +26,8 @@ class RoleAndPermissionSeeder extends Seeder
             'pesanan',
             'klien',
             'konten',
-
+            'invoice',
+            'profil',
         ];
 
         // Define actions
@@ -67,6 +68,30 @@ class RoleAndPermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => $exportActivityLogPermission]);
         $permissions[] = $exportActivityLogPermission;
 
+        // Tambahkan permission untuk "mengelola" (untuk route middleware)
+        $managePermissions = [
+            'mengelola users',
+            'mengelola roles',
+            'mengelola clients',
+            'mengelola products',
+            'mengelola orders',
+        ];
+
+        foreach ($managePermissions as $managePermission) {
+            Permission::firstOrCreate(['name' => $managePermission]);
+            $permissions[] = $managePermission;
+        }
+
+        // Tambahkan permission khusus yang mungkin tidak ter-cover oleh loop
+        $specialPermissions = [
+            'mengubah status pesanan', // Permission khusus untuk update status order
+        ];
+
+        foreach ($specialPermissions as $specialPermission) {
+            Permission::firstOrCreate(['name' => $specialPermission]);
+            $permissions[] = $specialPermission;
+        }
+
         // Create or get Super Admin role and assign all permissions (including akses godmode)
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
         $superAdmin->syncPermissions($permissions);
@@ -76,6 +101,13 @@ class RoleAndPermissionSeeder extends Seeder
         $admin->syncPermissions([
             // Godmode access permission (required to access admin area)
             'akses godmode',
+
+            // Permission untuk route middleware (mengelola)
+            'mengelola users',
+            'mengelola roles',
+            'mengelola clients',
+            'mengelola products',
+            'mengelola orders',
 
             // User / Klien B2B
             'melihat user',
@@ -90,9 +122,10 @@ class RoleAndPermissionSeeder extends Seeder
             'menghapus produk',  // Hapus menu
 
             // Pesanan (Order)
-            'melihat order',
-            'mengubah status order', // Fitur krusial: Pending -> Proses -> Selesai
-            'mengekspor order',      // Untuk laporan bulanan
+            'melihat pesanan',
+            'mengubah pesanan',  // Update pesanan
+            'mengubah status pesanan', // Update status pesanan khusus
+            'mengekspor pesanan', // Untuk laporan bulanan
 
             // Invoice & Laporan
             'melihat invoice',
@@ -118,9 +151,9 @@ class RoleAndPermissionSeeder extends Seeder
             // PENTING: Klien TIDAK BOLEH 'membuat', 'mengubah', atau 'menghapus' produk
 
             // Akses Pesanan (Order) - [Ref Proposal: 102, 103]
-            'membuat order',    // Inti fitur: Melakukan pemesanan
-            'melihat order',    // Melihat riwayat pesanan MEREKA SENDIRI
-            // PENTING: Klien TIDAK BOLEH 'mengubah status order' (itu tugas Admin)
+            'membuat pesanan',    // Inti fitur: Melakukan pemesanan
+            'melihat pesanan',    // Melihat riwayat pesanan MEREKA SENDIRI
+            // PENTING: Klien TIDAK BOLEH 'mengubah status pesanan' (itu tugas Admin)
 
             // Akses Faktur (Invoice) - [Ref Proposal: 104]
             'melihat invoice',  // Melihat tagihan pesanan mereka

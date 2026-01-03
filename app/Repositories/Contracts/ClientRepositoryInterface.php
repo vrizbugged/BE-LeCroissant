@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories\Interfaces;
+namespace App\Repositories\Contracts;
 
 use App\Models\User; // Mengacu pada User dengan role klien_b2b
 use Illuminate\Database\Eloquent\Collection;
@@ -43,6 +43,14 @@ interface ClientRepositoryInterface
      * @return Collection
      */
     public function getClientsByCitizenship($citizenship);
+
+    /**
+     * Get client by email and status
+     * * @param string $email
+     * * @param string $status
+     * @return User|null
+     */
+    public function getClientByEmailAndStatus($email, $status);
 
     /**
      * Create a new B2B client record

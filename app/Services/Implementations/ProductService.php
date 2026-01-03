@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Implementations;
 
 use Illuminate\Support\Facades\Cache;
-use App\Services\Interfaces\ProductServiceInterface;
-use App\Repositories\Interfaces\ProductRepositoryInterface;
+use App\Services\Contracts\ProductServiceInterface;
+use App\Repositories\Contracts\ProductRepositoryInterface;
 
 class ProductService implements ProductServiceInterface
 {

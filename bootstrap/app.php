@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // 1. Konfigurasi Standar (Bawaan Anda)
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
@@ -23,15 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Configure CORS for API routes
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
-    })
-    ->withMiddleware(function (Middleware $middleware) {
-        // Allow CORS from frontend
+
         $middleware->validateCsrfTokens(except: [
             'api/*',
+        ]);
+
+        // 2. PENAMBAHAN ALIAS UNTUK SPATIE (Solusi Error Anda)
+        // Ini memberitahu Laravel bahwa 'permission' = PermissionMiddleware::class
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

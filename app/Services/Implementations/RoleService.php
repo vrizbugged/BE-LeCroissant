@@ -171,6 +171,35 @@ class RoleService implements RoleServiceInterface
     }
 
     /**
+     * Menambahkan permission ke role.
+     *
+     * @param int $id
+     * @param string $permission
+     * @return mixed
+     */
+    public function addPermissionToRole($id, $permission)
+    {
+        $role = $this->getRoleById($id);
+
+        if (!$role) {
+            return null;
+        }
+
+        // Cek apakah permission sudah ada
+        if ($role->hasPermissionTo($permission)) {
+            return $role;
+        }
+
+        // Tambahkan permission
+        $role->givePermissionTo($permission);
+
+        // Clear cache
+        $this->clearRoleCaches();
+
+        return $role;
+    }
+
+    /**
      * Menghapus semua cache role
      *
      * @return void

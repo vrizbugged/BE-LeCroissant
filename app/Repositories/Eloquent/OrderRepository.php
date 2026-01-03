@@ -3,7 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\Order;
-use App\Repositories\Interfaces\OrderRepositoryInterface;
+use App\Repositories\Contracts\OrderRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class OrderRepository implements OrderRepositoryInterface

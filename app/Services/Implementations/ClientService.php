@@ -3,8 +3,8 @@
 namespace App\Services\Implementations;
 
 use App\Models\User;
-use App\Repositories\Interfaces\ClientRepositoryInterface;
-use App\Services\Interfaces\ClientServiceInterface;
+use App\Repositories\Contracts\ClientRepositoryInterface;
+use App\Services\Contracts\ClientServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -68,6 +68,17 @@ class ClientService implements ClientServiceInterface
     }
 
     /**
+     * Mengambil klien berdasarkan email dan status.
+     * * @param string $email
+     * @param string $status
+     * @return User|null
+     */
+    public function getClientByEmailAndStatus($email, $status)
+    {
+        return $this->clientRepository->getClientByEmailAndStatus($email, $status);
+    }
+
+    /**
      * Membuat data klien B2B baru.
      * * @param array $data
      * @return User
@@ -110,6 +121,22 @@ class ClientService implements ClientServiceInterface
             'status' => 'Aktif',
             'email_verified_at' => $timestamp
         ]);
+    }
+
+    /**
+     * Menangguhkan akun klien.
+     * * @param int $id
+     * @param string|null $reason
+     * @return User|null
+     */
+    public function suspendClientAccount($id, $reason = null)
+    {
+        $data = ['status' => 'Non Aktif'];
+        
+        // Jika ada alasan, bisa disimpan di field notes atau suspended_reason (jika ada)
+        // Untuk saat ini, cukup update status saja
+
+        return $this->clientRepository->updateClient($id, $data);
     }
 
     /**

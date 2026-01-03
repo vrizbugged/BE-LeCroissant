@@ -82,4 +82,13 @@ interface RoleServiceInterface
      * @return mixed
      */
     public function updateRoleStatus($id, $status);
+
+    /**
+     * Menambahkan permission ke role.
+     *
+     * @param int $id
+     * @param string $permission
+     * @return mixed
+     */
+    public function addPermissionToRole($id, $permission);
 }

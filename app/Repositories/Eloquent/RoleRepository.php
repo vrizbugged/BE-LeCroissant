@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Repositories\Contracts\RoleRepositoryInterface;

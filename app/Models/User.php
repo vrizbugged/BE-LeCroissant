@@ -29,6 +29,7 @@ class User extends Authenticatable
         'phone_number', // <-- Kolom baru Anda
         'address',      // <-- Kolom baru Anda
         'role',         // <-- Kolom baru Anda
+        'status',       // <-- Status user (Aktif/Non Aktif)
     ];
 
     /**

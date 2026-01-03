@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Interfaces;
+namespace App\Services\Contracts;
 
 use App\Models\User; // Mengacu pada User dengan role klien_b2b [cite: 99]
 use Illuminate\Database\Eloquent\Collection;

@@ -5,7 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Repositories\Interfaces\ProductRepositoryInterface; // Disesuaikan dengan folder Interfaces kita
+use App\Repositories\Contracts\ProductRepositoryInterface; // Disesuaikan dengan folder Contracts kita
 
 class ProductRepository implements ProductRepositoryInterface
 {

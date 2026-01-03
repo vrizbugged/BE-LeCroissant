@@ -3,7 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\User; // Menggunakan model User dengan role 'klien_b2b'
-use App\Repositories\Interfaces\ClientRepositoryInterface;
+use App\Repositories\Contracts\ClientRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -31,8 +31,8 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getAllClients(): Collection
     {
-        // Hanya mengambil user yang memiliki role klien_b2b
-        return $this->model->role('klien_b2b')->get();
+        // Hanya mengambil user yang memiliki role klien_b2b (filter by database column)
+        return $this->model->where('role', 'klien_b2b')->get();
     }
 
     /**
@@ -42,7 +42,7 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientById($id): ?User
     {
-        $model = $this->model->role('klien_b2b')->find($id);
+        $model = $this->model->where('role', 'klien_b2b')->find($id);
         return $model instanceof User ? $model : null;
     }
 
@@ -54,7 +54,7 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientsBySector($sector): Collection
     {
-        return $this->model->role('klien_b2b')
+        return $this->model->where('role', 'klien_b2b')
                            ->where('business_sector', $sector)
                            ->get();
     }
@@ -67,7 +67,7 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientsByStatus($status): Collection
     {
-        return $this->model->role('klien_b2b')
+        return $this->model->where('role', 'klien_b2b')
                            ->where('status', $status)
                            ->get();
     }
@@ -80,9 +80,23 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientsByCitizenship($citizenship): Collection
     {
-        return $this->model->role('klien_b2b')
+        return $this->model->where('role', 'klien_b2b')
                            ->where('citizenship', $citizenship)
                            ->get();
+    }
+
+    /**
+     * Mengambil klien berdasarkan email dan status.
+     * * @param string $email
+     * * @param string $status
+     * @return User|null
+     */
+    public function getClientByEmailAndStatus($email, $status): ?User
+    {
+        return $this->model->where('role', 'klien_b2b')
+                           ->where('email', $email)
+                           ->where('status', $status)
+                           ->first();
     }
 
     /**
@@ -92,8 +106,16 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function createClient(array $data): User
     {
+        // Pastikan role di database adalah 'klien_b2b'
+        $data['role'] = 'klien_b2b';
         $client = $this->model->create($data);
-        $client->assignRole('klien_b2b'); // Otomatis assign role
+
+        // Assign Spatie role 'Anggota' untuk permission management
+        $anggotaRole = \Spatie\Permission\Models\Role::where('name', 'Anggota')->first();
+        if ($anggotaRole) {
+            $client->assignRole($anggotaRole);
+        }
+
         return $client;
     }
 

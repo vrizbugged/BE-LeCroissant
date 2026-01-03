@@ -34,6 +34,7 @@ class UserFactory extends Factory
             'phone_number' => fake()->phoneNumber(),
             'address' => fake()->address(),
             'role' => 'klien_b2b', // Default user palsu adalah klien
+            'status' => 'Aktif', // Default status adalah Aktif
             // -------------------------
 
             'remember_token' => Str::random(10),

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Implementations;
 
-use App\Services\Interfaces\OrderServiceInterface;
-use App\Repositories\Interfaces\OrderRepositoryInterface;
+use App\Services\Contracts\OrderServiceInterface;
+use App\Repositories\Contracts\OrderRepositoryInterface;
 use Carbon\Carbon;
 
 class OrderService implements OrderServiceInterface
