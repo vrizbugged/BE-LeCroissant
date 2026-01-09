@@ -23,7 +23,7 @@ class RoleResource extends JsonResource
             // Contoh: ['view products', 'edit products', 'verify orders']
             'permissions' => $this->permissions->pluck('name'),
 
-            'status' => $this->status, // Field status Aktif/Non Aktif sesuai struktur Shine
+            'status' => $this->status,
 
             'created_at' => $this->created_at ? $this->created_at->toDateTimeString() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toDateTimeString() : null,

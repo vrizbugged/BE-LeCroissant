@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Contracts;
 
-use App\Models\User; // Mengacu pada User dengan role klien_b2b
+use App\Models\Client; // Menggunakan model Client terpisah
 use Illuminate\Database\Eloquent\Collection;
 
 interface ClientRepositoryInterface
@@ -16,7 +16,7 @@ interface ClientRepositoryInterface
     /**
      * Get client by id
      * * @param int $id
-     * @return User|null
+     * @return Client|null
      */
     public function getClientById($id);
 
@@ -24,7 +24,7 @@ interface ClientRepositoryInterface
      * Get clients by business sector (e.g., Hotel, Restaurant)
      * [Ref Proposal: Mengklasifikasikan responden berdasarkan sektor bisnis]
      * * @param string $sector
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsBySector($sector);
 
@@ -32,7 +32,7 @@ interface ClientRepositoryInterface
      * Get clients by status (e.g., Aktif, Pending, Non-Aktif)
      * [Ref Proposal: Verifikasi klien B2B]
      * * @param string $status
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsByStatus($status);
 
@@ -40,7 +40,7 @@ interface ClientRepositoryInterface
      * Get clients by citizenship (WNI/WNA)
      * [Ref Proposal: Membedakan klien lokal dan asing]
      * * @param string $citizenship
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsByCitizenship($citizenship);
 
@@ -48,22 +48,22 @@ interface ClientRepositoryInterface
      * Get client by email and status
      * * @param string $email
      * * @param string $status
-     * @return User|null
+     * * @return Client|null
      */
     public function getClientByEmailAndStatus($email, $status);
 
     /**
      * Create a new B2B client record
      * * @param array $data
-     * @return User
+     * * @return Client
      */
     public function createClient(array $data);
 
     /**
      * Update client information
      * * @param int $id
-     * @param array $data
-     * @return User|null
+     * * @param array $data
+     * * @return Client|null
      */
     public function updateClient($id, array $data);
 
@@ -71,7 +71,7 @@ interface ClientRepositoryInterface
      * Verify client account (Change status to Active)
      * [Ref Proposal: Admin memverifikasi pesanan/klien B2B]
      * * @param int $id
-     * @return User|null
+     * * @return Client|null
      */
     public function verifyClient($id);
 
@@ -84,7 +84,7 @@ interface ClientRepositoryInterface
     /**
      * Delete client record
      * * @param int $id
-     * @return bool
+     * * @return bool
      */
     public function deleteClient($id);
 }

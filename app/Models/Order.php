@@ -13,7 +13,7 @@ class Order extends Model
      * Atribut yang dapat diisi secara massal.
      */
     protected $fillable = [
-        'user_id',
+        'client_id',      // Relasi ke Client (menggantikan user_id)
         'delivery_date',
         'status',
         'total_price',
@@ -21,11 +21,26 @@ class Order extends Model
     ];
 
     /**
-     * Mendefinisikan relasi: Satu Order DIMILIKI OLEH SATU User.
+     * Mendefinisikan relasi: Satu Order DIMILIKI OLEH SATU Client.
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Relasi ke User melalui Client (untuk backward compatibility).
      */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOneThrough(
+            User::class,
+            Client::class,
+            'id',        // Foreign key di clients table
+            'id',        // Foreign key di users table
+            'client_id', // Local key di orders table
+            'user_id'    // Local key di clients table
+        );
     }
 
     /**

@@ -18,6 +18,8 @@ use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Repositories\Eloquent\ClientRepository;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Eloquent\OrderRepository;
+use App\Repositories\Contracts\OrderDetailRepositoryInterface;
+use App\Repositories\Eloquent\OrderDetailRepository;
 
 // (Services)
 use App\Services\Contracts\UserServiceInterface;
@@ -32,6 +34,8 @@ use App\Services\Contracts\ClientServiceInterface;
 use App\Services\Implementations\ClientService;
 use App\Services\Contracts\OrderServiceInterface;
 use App\Services\Implementations\OrderService;
+use App\Services\Contracts\OrderDetailServiceInterface;
+use App\Services\Implementations\OrderDetailService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -73,6 +77,10 @@ class AppServiceProvider extends ServiceProvider
         // Binding Order (Transaksi & Pesanan)
         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         $this->app->bind(OrderServiceInterface::class, OrderService::class);
+
+        // Binding OrderDetail (Rincian Item Pesanan)
+        $this->app->bind(OrderDetailRepositoryInterface::class, OrderDetailRepository::class);
+        $this->app->bind(OrderDetailServiceInterface::class, OrderDetailService::class);
     }
 
     /**

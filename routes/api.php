@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\OrderDetailController;
 use App\Http\Controllers\Api\DashboardController;
 
 /*
@@ -103,6 +104,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('orders/{id}', [OrderController::class, 'destroy']);
         Route::get('orders-report', [OrderController::class, 'report']);
         Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus']);
+    });
+
+    // ---------------------------------------------------------------------
+    // MANAJEMEN ORDER DETAIL (Rincian Item Pesanan)
+    // ---------------------------------------------------------------------
+    
+    // Route untuk melihat order details (bisa berdasarkan order_id atau product_id)
+    Route::get('order-details', [OrderDetailController::class, 'index']);
+    Route::get('order-details/{id}', [OrderDetailController::class, 'show']);
+
+    // Route untuk membuat multiple order details sekaligus
+    Route::post('order-details/many', [OrderDetailController::class, 'storeMany']);
+
+    // Route Khusus Admin (Create/Update/Delete)
+    Route::middleware('permission:mengelola orders')->group(function () {
+        Route::post('order-details', [OrderDetailController::class, 'store']);
+        Route::put('order-details/{id}', [OrderDetailController::class, 'update']);
+        Route::delete('order-details/{id}', [OrderDetailController::class, 'destroy']);
     });
 
 });

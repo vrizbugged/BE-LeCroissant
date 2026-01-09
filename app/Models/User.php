@@ -30,6 +30,7 @@ class User extends Authenticatable
         'address',      // <-- Kolom baru Anda
         'role',         // <-- Kolom baru Anda
         'status',       // <-- Status user (Aktif/Non Aktif)
+        // Field B2B sudah dipindah ke model Client terpisah
     ];
 
     /**
@@ -56,10 +57,18 @@ class User extends Authenticatable
 
 
     /**
-     * Relasi ke Order (sudah benar).
+     * Relasi ke Client (jika user adalah klien B2B).
+     */
+    public function client()
+    {
+        return $this->hasOne(Client::class);
+    }
+
+    /**
+     * Relasi ke Order melalui Client (untuk backward compatibility).
      */
     public function orders()
     {
-        return $this->hasMany(Order::class);
+        return $this->hasManyThrough(Order::class, Client::class, 'user_id', 'client_id', 'id', 'id');
     }
 }

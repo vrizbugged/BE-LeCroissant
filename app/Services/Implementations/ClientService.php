@@ -2,7 +2,7 @@
 
 namespace App\Services\Implementations;
 
-use App\Models\User;
+use App\Models\Client;
 use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Services\Contracts\ClientServiceInterface;
 use Carbon\Carbon;
@@ -38,7 +38,7 @@ class ClientService implements ClientServiceInterface
     /**
      * Mengambil klien berdasarkan ID.
      * * @param int $id
-     * @return User|null
+     * @return Client|null
      */
     public function getClientById($id)
     {
@@ -71,7 +71,7 @@ class ClientService implements ClientServiceInterface
      * Mengambil klien berdasarkan email dan status.
      * * @param string $email
      * @param string $status
-     * @return User|null
+     * @return Client|null
      */
     public function getClientByEmailAndStatus($email, $status)
     {
@@ -81,7 +81,7 @@ class ClientService implements ClientServiceInterface
     /**
      * Membuat data klien B2B baru.
      * * @param array $data
-     * @return User
+     * @return Client
      */
     public function createClient(array $data)
     {
@@ -98,7 +98,7 @@ class ClientService implements ClientServiceInterface
      * Memperbarui informasi klien.
      * * @param int $id
      * @param array $data
-     * @return User|null
+     * @return Client|null
      */
     public function updateClient($id, array $data)
     {
@@ -110,16 +110,13 @@ class ClientService implements ClientServiceInterface
      * [Ref Proposal: Dapat melihat dan memverifikasi pesanan/klien B2B] [cite: 107, 109]
      * * @param int $id
      * @param string|null $verifiedAt
-     * @return User|null
+     * @return Client|null
      */
     public function verifyClientAccount($id, $verifiedAt = null)
     {
-        $timestamp = $verifiedAt ? Carbon::parse($verifiedAt) : Carbon::now();
-
-        // Memanggil repository untuk memperbarui status dan timestamp verifikasi
+        // Memanggil repository untuk memperbarui status
         return $this->clientRepository->updateClient($id, [
-            'status' => 'Aktif',
-            'email_verified_at' => $timestamp
+            'status' => 'Aktif'
         ]);
     }
 
@@ -127,7 +124,7 @@ class ClientService implements ClientServiceInterface
      * Menangguhkan akun klien.
      * * @param int $id
      * @param string|null $reason
-     * @return User|null
+     * @return Client|null
      */
     public function suspendClientAccount($id, $reason = null)
     {
@@ -155,7 +152,7 @@ class ClientService implements ClientServiceInterface
         $startDate = Carbon::parse($startDate)->startOfDay();
         $endDate = Carbon::parse($endDate)->endOfDay();
 
-        // Mengambil data pesanan melalui relasi (Pastikan model User punya relasi orders)
+        // Mengambil data pesanan melalui relasi (Pastikan model Client punya relasi orders)
         $orders = $client->orders()
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();

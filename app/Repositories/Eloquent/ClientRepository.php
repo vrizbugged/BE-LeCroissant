@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Models\User; // Menggunakan model User dengan role 'klien_b2b'
+use App\Models\Client; // Menggunakan model Client terpisah
 use App\Repositories\Contracts\ClientRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\Log;
 class ClientRepository implements ClientRepositoryInterface
 {
     /**
-     * @var User
+     * @var Client
      */
     protected $model;
 
     /**
      * ClientRepository constructor.
      *
-     * @param User $model
+     * @param Client $model
      */
-    public function __construct(User $model)
+    public function __construct(Client $model)
     {
         $this->model = $model;
     }
@@ -31,70 +31,61 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getAllClients(): Collection
     {
-        // Hanya mengambil user yang memiliki role klien_b2b (filter by database column)
-        return $this->model->where('role', 'klien_b2b')->get();
+        return $this->model->all();
     }
 
     /**
      * Mengambil klien berdasarkan ID.
      * * @param int $id
-     * @return User|null
+     * * @return Client|null
      */
-    public function getClientById($id): ?User
+    public function getClientById($id): ?Client
     {
-        $model = $this->model->where('role', 'klien_b2b')->find($id);
-        return $model instanceof User ? $model : null;
+        return $this->model->find($id);
     }
 
     /**
      * Mengambil klien berdasarkan sektor bisnis (Hotel, Restoran, EO).
      * [Ref Proposal: Mengklasifikasikan responden berdasarkan sektor bisnis]
      * * @param string $sector
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsBySector($sector): Collection
     {
-        return $this->model->where('role', 'klien_b2b')
-                           ->where('business_sector', $sector)
-                           ->get();
+        return $this->model->where('business_sector', $sector)->get();
     }
 
     /**
      * Mengambil klien berdasarkan status (Pending, Aktif, Non-Aktif).
      * [Ref Proposal: Verifikasi klien B2B]
      * * @param string $status
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsByStatus($status): Collection
     {
-        return $this->model->where('role', 'klien_b2b')
-                           ->where('status', $status)
-                           ->get();
+        return $this->model->where('status', $status)->get();
     }
 
     /**
      * Mengambil klien berdasarkan kewarganegaraan (WNI/WNA).
      * [Ref Proposal: Membedakan klien lokal dan asing]
      * * @param string $citizenship
-     * @return Collection
+     * * @return Collection
      */
     public function getClientsByCitizenship($citizenship): Collection
     {
-        return $this->model->where('role', 'klien_b2b')
-                           ->where('citizenship', $citizenship)
-                           ->get();
+        return $this->model->where('citizenship', $citizenship)->get();
     }
 
     /**
      * Mengambil klien berdasarkan email dan status.
      * * @param string $email
      * * @param string $status
-     * @return User|null
+     * * @return Client|null
      */
-    public function getClientByEmailAndStatus($email, $status): ?User
+    public function getClientByEmailAndStatus($email, $status): ?Client
     {
-        return $this->model->where('role', 'klien_b2b')
-                           ->where('email', $email)
+        return $this->model->where('email', $email)
                            ->where('status', $status)
                            ->first();
     }
@@ -102,18 +93,21 @@ class ClientRepository implements ClientRepositoryInterface
     /**
      * Membuat data klien B2B baru.
      * * @param array $data
-     * @return User
+     * * @return Client
      */
-    public function createClient(array $data): User
+    public function createClient(array $data): Client
     {
-        // Pastikan role di database adalah 'klien_b2b'
-        $data['role'] = 'klien_b2b';
         $client = $this->model->create($data);
 
-        // Assign Spatie role 'Anggota' untuk permission management
-        $anggotaRole = \Spatie\Permission\Models\Role::where('name', 'Anggota')->first();
-        if ($anggotaRole) {
-            $client->assignRole($anggotaRole);
+        // Jika ada user_id, assign Spatie role 'Anggota' untuk permission management
+        if ($client->user_id) {
+            $user = $client->user;
+            if ($user) {
+                $anggotaRole = \Spatie\Permission\Models\Role::where('name', 'Anggota')->first();
+                if ($anggotaRole) {
+                    $user->assignRole($anggotaRole);
+                }
+            }
         }
 
         return $client;
@@ -122,10 +116,10 @@ class ClientRepository implements ClientRepositoryInterface
     /**
      * Memperbarui informasi klien.
      * * @param int $id
-     * @param array $data
-     * @return User|null
+     * * @param array $data
+     * * @return Client|null
      */
-    public function updateClient($id, array $data): ?User
+    public function updateClient($id, array $data): ?Client
     {
         $client = $this->getClientById($id);
 
@@ -141,9 +135,9 @@ class ClientRepository implements ClientRepositoryInterface
      * Verifikasi akun klien (Mengubah status menjadi Aktif).
      * [Ref Proposal: Admin memverifikasi pesanan/klien B2B]
      * * @param int $id
-     * @return User|null
+     * * @return Client|null
      */
-    public function verifyClient($id): ?User
+    public function verifyClient($id): ?Client
     {
         $client = $this->getClientById($id);
 
@@ -177,7 +171,7 @@ class ClientRepository implements ClientRepositoryInterface
     /**
      * Menghapus data klien.
      * * @param int $id
-     * @return bool
+     * * @return bool
      */
     public function deleteClient($id): bool
     {
@@ -185,6 +179,11 @@ class ClientRepository implements ClientRepositoryInterface
 
         if (!$client) {
             return false;
+        }
+
+        // Cek apakah klien memiliki pesanan aktif
+        if ($client->orders()->whereIn('status', ['menunggu_konfirmasi', 'diproses', 'dikirim'])->exists()) {
+            return false; // Tidak bisa hapus jika ada pesanan aktif
         }
 
         return $client->delete();
