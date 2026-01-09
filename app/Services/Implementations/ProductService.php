@@ -56,6 +56,26 @@ class ProductService implements ProductServiceInterface
     }
 
     /**
+     * Mengambil produk berdasarkan status.
+     *
+     * @param string $status
+     * @return mixed
+     */
+    public function getProductsByStatus($status)
+    {
+        // Gunakan cache yang sesuai berdasarkan status
+        $cacheKey = $status === 'Aktif' 
+            ? self::PRODUCTS_ACTIVE_CACHE_KEY 
+            : ($status === 'Non Aktif' 
+                ? self::PRODUCTS_INACTIVE_CACHE_KEY 
+                : 'products_status_' . $status);
+        
+        return Cache::remember($cacheKey, 3600, function () use ($status) {
+            return $this->repository->getProductsByStatus($status);
+        });
+    }
+
+    /**
      * Mengambil produk berdasarkan ID.
      *
      * @param int $id

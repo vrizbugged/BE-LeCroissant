@@ -31,7 +31,8 @@ class ProductStoreRequest extends FormRequest
             'deskripsi' => 'required|string',
             'harga_grosir' => 'required|numeric|min:0', // Sesuai kebutuhan harga B2B
             'ketersediaan_stok' => 'required|integer|min:0',
-            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Validasi file gambar [cite: 101]
+            'gambar' => 'nullable', // Bisa file image atau URL string
+            // Validasi file akan dilakukan di controller (image|mimes:jpeg,png,jpg|max:2048 jika file)
             'status' => 'required|in:Aktif,Non Aktif',
         ];
     }

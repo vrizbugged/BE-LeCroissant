@@ -9,6 +9,7 @@ use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use App\Services\Contracts\ProductServiceInterface; // Pastikan Interface ini ada
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -64,7 +65,34 @@ class ProductController extends Controller
     public function store(ProductStoreRequest $request): JsonResponse
     {
         // Validasi gambar, harga numeric, dll sudah ditangani ProductStoreRequest
-        $product = $this->productService->createProduct($request->validated());
+        $validated = $request->validated();
+        
+        // Handle gambar: bisa file upload atau URL string
+        $imageUrl = null;
+        if ($request->hasFile('gambar')) {
+            // File upload - validasi file
+            $file = $request->file('gambar');
+            $request->validate([
+                'gambar' => 'image|mimes:jpeg,png,jpg|max:2048',
+            ]);
+            $path = $file->store('products', 'public'); // Simpan di storage/app/public/products
+            $imageUrl = $path; // Simpan path relatif untuk digunakan dengan Storage::url()
+        } elseif ($request->filled('gambar') && filter_var($request->input('gambar'), FILTER_VALIDATE_URL)) {
+            // URL string
+            $imageUrl = $request->input('gambar');
+        }
+        
+        // Map field dari request ke field database
+        $data = [
+            'name' => $validated['nama_produk'],
+            'description' => $validated['deskripsi'],
+            'price_b2b' => $validated['harga_grosir'],
+            'stock' => $validated['ketersediaan_stok'],
+            'image_url' => $imageUrl,
+            'status' => $validated['status'] ?? 'Aktif',
+        ];
+        
+        $product = $this->productService->createProduct($data);
 
         if (!$product) {
             return response()->json([
@@ -106,7 +134,51 @@ class ProductController extends Controller
      */
     public function update(ProductUpdateRequest $request, string $id): JsonResponse
     {
-        $product = $this->productService->updateProduct($id, $request->validated());
+        $validated = $request->validated();
+        
+        // Map field dari request ke field database
+        $data = [];
+        if (isset($validated['nama_produk'])) {
+            $data['name'] = $validated['nama_produk'];
+        }
+        if (isset($validated['deskripsi'])) {
+            $data['description'] = $validated['deskripsi'];
+        }
+        if (isset($validated['harga_grosir'])) {
+            $data['price_b2b'] = $validated['harga_grosir'];
+        }
+        if (isset($validated['ketersediaan_stok'])) {
+            $data['stock'] = $validated['ketersediaan_stok'];
+        }
+        
+        // Handle gambar: bisa file upload atau URL string
+        if ($request->hasFile('gambar')) {
+            // File upload - validasi file
+            $file = $request->file('gambar');
+            $request->validate([
+                'gambar' => 'image|mimes:jpeg,png,jpg|max:2048',
+            ]);
+            
+            // Hapus file lama jika ada
+            $product = $this->productService->getProductById($id);
+            if ($product && $product->image_url && !filter_var($product->image_url, FILTER_VALIDATE_URL)) {
+                // Hanya hapus jika bukan URL eksternal
+                Storage::disk('public')->delete($product->image_url);
+            }
+            
+            // Simpan file baru
+            $path = $file->store('products', 'public');
+            $data['image_url'] = $path;
+        } elseif ($request->filled('gambar') && filter_var($request->input('gambar'), FILTER_VALIDATE_URL)) {
+            // URL string
+            $data['image_url'] = $request->input('gambar');
+        }
+        
+        if (isset($validated['status'])) {
+            $data['status'] = $validated['status'];
+        }
+        
+        $product = $this->productService->updateProduct($id, $data);
 
         if (!$product) {
             return response()->json([

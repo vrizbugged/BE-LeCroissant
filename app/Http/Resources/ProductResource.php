@@ -29,7 +29,12 @@ class ProductResource extends JsonResource
             'ketersediaan_stok' => (int) $this->ketersediaan_stok,
 
             // Mengubah path database menjadi URL lengkap agar gambar muncul di Next.js
-            'gambar_url' => $this->gambar ? url(Storage::url($this->gambar)) : null,
+            // Jika gambar adalah URL lengkap, gunakan langsung. Jika path, convert ke URL
+            'gambar_url' => $this->image_url ? (
+                filter_var($this->image_url, FILTER_VALIDATE_URL) 
+                    ? $this->image_url 
+                    : Storage::disk('public')->url($this->image_url)
+            ) : null,
 
             'status' => $this->status, // Aktif atau Non Aktif
 

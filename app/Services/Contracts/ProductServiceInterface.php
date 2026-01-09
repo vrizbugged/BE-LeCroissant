@@ -26,6 +26,14 @@ interface ProductServiceInterface
     public function getInactiveProducts();
 
     /**
+     * Mengambil produk berdasarkan status.
+     *
+     * @param string $status
+     * @return mixed
+     */
+    public function getProductsByStatus($status);
+
+    /**
      * Mengambil produk berdasarkan ID.
      *
      * @param int $id

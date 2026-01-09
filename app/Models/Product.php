@@ -18,7 +18,48 @@ class Product extends Model
         'price_b2b',
         'stock',
         'image_url',
+        'status',
     ];
+    
+    /**
+     * Accessor untuk nama_produk (mapping ke name)
+     */
+    public function getNamaProdukAttribute()
+    {
+        return $this->name;
+    }
+    
+    /**
+     * Accessor untuk deskripsi (mapping ke description)
+     */
+    public function getDeskripsiAttribute()
+    {
+        return $this->description;
+    }
+    
+    /**
+     * Accessor untuk harga_grosir (mapping ke price_b2b)
+     */
+    public function getHargaGrosirAttribute()
+    {
+        return $this->price_b2b;
+    }
+    
+    /**
+     * Accessor untuk ketersediaan_stok (mapping ke stock)
+     */
+    public function getKetersediaanStokAttribute()
+    {
+        return $this->stock;
+    }
+    
+    /**
+     * Accessor untuk gambar (mapping ke image_url)
+     */
+    public function getGambarAttribute()
+    {
+        return $this->image_url;
+    }
 
     /**
      * Mendefinisikan relasi: Satu Product bisa ada di BANYAK Order.
