@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Client extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -40,6 +42,17 @@ class Client extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Konfigurasi Activity Log untuk Client.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'company_name', 'business_sector'])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "Client #{$this->id} {$eventName} - {$this->company_name}");
     }
 }
 

@@ -92,76 +92,74 @@ class RoleAndPermissionSeeder extends Seeder
             $permissions[] = $specialPermission;
         }
 
-        // Create or get Super Admin role and assign all permissions (including akses godmode)
+        // --- 1. SUPER ADMIN (Owner) ---
+        // Punya SEMUA permissions (Godmode, Activity Log, Role Management)
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
         $superAdmin->syncPermissions($permissions);
 
-        // Create or get Admin role and assign specific permissions
+        // --- 2. ADMIN (Staff Operasional) ---
+        // Permission dibatasi: TIDAK BISA lihat log, TIDAK BISA ubah role
         $admin = Role::firstOrCreate(['name' => 'Admin']);
         $admin->syncPermissions([
-            // Godmode access permission (required to access admin area)
+            // Godmode dihapus (biar aman, atau aktifkan jika Admin juga butuh akses dashboard penuh)
+            // 'akses godmode',
+            // Opsional: Aktifkan 'akses godmode' jika Admin butuh login ke dashboard yang sama dengan Super Admin,
+            // tapi menu-menunya nanti disembunyikan via permission check di frontend.
             'akses godmode',
 
-            // Permission untuk route middleware (mengelola)
+            // Middleware Permissions (TAPI TANPA 'mengelola roles')
             'mengelola users',
-            'mengelola roles',
             'mengelola clients',
             'mengelola products',
             'mengelola orders',
 
-            // User / Klien B2B
+            // User / Klien B2B (Staff boleh verifikasi/edit klien)
             'melihat user',
-            'membuat user',      // Admin mungkin perlu mendaftarkan klien manual
-            'mengubah user',     // Edit data klien jika ada kesalahan
-            'menghapus user',    // Hapus/Ban klien bermasalah
+            'membuat user',
+            'mengubah user',
+            // 'menghapus user', // Sebaiknya Staff tidak bisa hapus user sembarangan
 
-            // Produk (Pastry)
+            // Produk (Pastry) - Full Akses
             'melihat produk',
-            'membuat produk',    // Menambah menu baru
-            'mengubah produk',   // Update harga/stok
-            'menghapus produk',  // Hapus menu
+            'membuat produk',
+            'mengubah produk',
+            'menghapus produk',
 
-            // Pesanan (Order)
+            // Pesanan (Order) - Full Akses
             'melihat pesanan',
-            'mengubah pesanan',  // Update pesanan
-            'mengubah status pesanan', // Update status pesanan khusus
-            'mengekspor pesanan', // Untuk laporan bulanan
+            'mengubah pesanan',
+            'mengubah status pesanan',
+            'mengekspor pesanan',
 
             // Invoice & Laporan
             'melihat invoice',
-            'mengekspor invoice',    // Mencetak laporan keuangan
+            'mengekspor invoice',
 
-            // Konten Web (Profil Bisnis)
+            // Konten Web
             'melihat konten',
-            'mengubah konten',       // Edit halaman "Tentang Kami" / "Kontak"
+            'mengubah konten',
 
-            // Activity Log permissions
-            'melihat activity log',
-            'mengekspor activity log',
-
-            // Log Viewer permissions
-            'melihat log viewer',
+            // --- PENTING: Permission Activity Log & Roles DIHAPUS dari sini ---
+            // Admin biasa TIDAK BOLEH melihat log atau mengubah role
         ]);
 
-        // Create or get Anggota (Pelanggan) role and assign limited permissions
+        // --- 3. ANGGOTA (Klien B2B) ---
+        // Permission terbatas untuk belanja
         $anggota = Role::firstOrCreate(['name' => 'Anggota']);
         $anggota->syncPermissions([
-            // Akses Produk (Katalog) - [Ref Proposal: 101]
-            'melihat produk',   // Klien BISA melihat daftar produk & harga
-            // PENTING: Klien TIDAK BOLEH 'membuat', 'mengubah', atau 'menghapus' produk
+            // Katalog
+            'melihat produk',
 
-            // Akses Pesanan (Order) - [Ref Proposal: 102, 103]
-            'membuat pesanan',    // Inti fitur: Melakukan pemesanan
-            'melihat pesanan',    // Melihat riwayat pesanan MEREKA SENDIRI
-            // PENTING: Klien TIDAK BOLEH 'mengubah status pesanan' (itu tugas Admin)
+            // Pesanan Sendiri
+            'membuat pesanan',
+            'melihat pesanan',
 
-            // Akses Faktur (Invoice) - [Ref Proposal: 104]
-            'melihat invoice',  // Melihat tagihan pesanan mereka
+            // Invoice Sendiri
+            'melihat invoice',
 
-            // Manajemen Akun Sendiri
+            // Akun Sendiri
             'melihat profil',
             'mengubah profil',
-
         ]);
     }
 }

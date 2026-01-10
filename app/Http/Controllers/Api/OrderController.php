@@ -14,7 +14,7 @@ class OrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Order::with(['user', 'products', 'invoice'])
+        $query = Order::with(['client', 'client.user', 'products', 'invoice'])
             ->orderByDesc('created_at');
 
         // Filter by status
@@ -46,8 +46,24 @@ class OrderController extends Controller
      */
     public function myOrders(Request $request): JsonResponse
     {
-        $orders = Order::with(['products', 'invoice'])
-            ->where('user_id', $request->user()->id)
+        // Get client for the logged in user
+        $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
+        
+        if (!$client) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'per_page' => 15,
+                    'total' => 0,
+                    'last_page' => 1,
+                ],
+            ]);
+        }
+        
+        $orders = Order::with(['client', 'client.user', 'products', 'invoice'])
+            ->where('client_id', $client->id)
             ->orderByDesc('created_at')
             ->paginate($request->query('per_page', 15));
 
@@ -76,9 +92,26 @@ class OrderController extends Controller
             'products.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
+        // Get or create client for the user
+        $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
+        if (!$client) {
+            // Create client if doesn't exist
+            $client = \App\Models\Client::create([
+                'user_id' => $request->user()->id,
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+                'phone_number' => $request->user()->phone_number,
+                'address' => $request->user()->address,
+                'company_name' => $request->user()->company_name,
+                'business_sector' => $request->user()->business_sector ?? 'Perusahaan Lain',
+                'citizenship' => $request->user()->citizenship ?? 'WNI',
+                'status' => 'Aktif',
+            ]);
+        }
+        
         // Buat order
         $order = Order::create([
-            'user_id' => $request->user()->id,
+            'client_id' => $client->id,
             'delivery_date' => $validated['delivery_date'],
             'special_notes' => $validated['special_notes'] ?? null,
             'status' => 'menunggu_konfirmasi',
@@ -105,7 +138,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order berhasil dibuat',
-            'data' => $order->load(['products', 'user']),
+            'data' => $order->load(['client', 'client.user', 'products']),
         ], 201);
     }
 
@@ -114,7 +147,7 @@ class OrderController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $order = Order::with(['user', 'products', 'invoice'])->find($id);
+        $order = Order::with(['client', 'client.user', 'products', 'invoice'])->find($id);
 
         if (!$order) {
             return response()->json([
@@ -154,7 +187,7 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Order berhasil diperbarui',
-            'data' => $order->fresh()->load(['user', 'products', 'invoice']),
+            'data' => $order->fresh()->load(['client', 'client.user', 'products', 'invoice']),
         ]);
     }
 
@@ -220,7 +253,7 @@ class OrderController extends Controller
         $endDate = $request->query('end_date', date('Y-m-d'));
 
         $orders = Order::whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
-            ->with(['user', 'products'])
+            ->with(['client', 'client.user', 'products'])
             ->get();
 
         $totalRevenue = $orders->sum('total_price');

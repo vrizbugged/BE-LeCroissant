@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class OrderSeeder extends Seeder
@@ -14,15 +14,15 @@ class OrderSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ambil semua user dengan role klien_b2b
-        $klienUsers = User::where('role', 'klien_b2b')->get();
+        // Ambil semua client (yang sudah dibuat oleh ClientSeeder)
+        $clients = Client::all();
         
         // Ambil semua produk
         $products = Product::all();
 
-        // Pastikan ada user dan produk sebelum membuat order
-        if ($klienUsers->isEmpty() || $products->isEmpty()) {
-            $this->command->warn('Tidak ada user klien_b2b atau produk. Pastikan UserSeeder dan ProductSeeder sudah dijalankan terlebih dahulu.');
+        // Pastikan ada client dan produk sebelum membuat order
+        if ($clients->isEmpty() || $products->isEmpty()) {
+            $this->command->warn('Tidak ada client atau produk. Pastikan ClientSeeder dan ProductSeeder sudah dijalankan terlebih dahulu.');
             return;
         }
 
@@ -30,7 +30,7 @@ class OrderSeeder extends Seeder
         Order::factory()
             ->count(30)
             ->create([
-                'user_id' => $klienUsers->random()->id,
+                'client_id' => $clients->random()->id,
             ])
             ->each(function ($order) use ($products) {
                 // Untuk setiap order, tambahkan 1-3 produk

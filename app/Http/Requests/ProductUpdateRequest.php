@@ -31,7 +31,7 @@ class ProductUpdateRequest extends FormRequest
                 'string',
                 'max:255',
                 // Mengabaikan ID produk yang sedang diedit agar tidak dianggap duplikat
-                Rule::unique('products', 'nama_produk')->ignore($productId),
+                Rule::unique('products', 'name')->ignore($productId),
             ],
             'deskripsi' => 'required|string',
             'harga_grosir' => 'required|numeric|min:0',

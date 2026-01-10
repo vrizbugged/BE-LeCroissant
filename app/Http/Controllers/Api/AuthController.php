@@ -57,6 +57,9 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
+        // Load roles relationship
+        $user->load('roles');
+
         return response()->json([
             'success' => true,
             'message' => 'Logged in successfully',
@@ -96,10 +99,15 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
+        $user = $request->user();
+        if ($user) {
+            $user->load('roles');
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
         ]);
     }

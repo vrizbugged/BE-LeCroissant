@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -68,5 +70,16 @@ class Order extends Model
     public function details()
     {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    /**
+     * Konfigurasi Activity Log untuk Order.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'total_price', 'delivery_date'])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "Order #{$this->id} {$eventName} - Status: {$this->status}");
     }
 }

@@ -14,43 +14,66 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Pastikan role sudah ada (dibuat oleh RoleAndPermissionSeeder)
+        // 1. Ambil Role dari Database (Termasuk Super Admin)
+        $superAdminRole = Role::where('name', 'Super Admin')->first();
         $adminRole = Role::where('name', 'Admin')->first();
         $anggotaRole = Role::where('name', 'Anggota')->first();
 
-        if (!$adminRole) {
-            $this->command->warn('Role "Admin" tidak ditemukan. Pastikan RoleAndPermissionSeeder sudah dijalankan terlebih dahulu.');
-            return;
+        // --- [BARU] Buat 1 Akun Super Admin (Owner) ---
+        // Akun ini yang nanti punya akses Godmode & Activity Log
+        $superUser = User::updateOrCreate(
+            ['email' => 'super@lecroissant.com'],
+            [
+                'name' => 'Super Owner',
+                'password' => Hash::make('password123'), // Password Super Admin
+                'role' => 'super_admin', // Label string di DB
+                'status' => 'Aktif',
+            ]
+        );
+
+        // Assign role Super Admin
+        if ($superAdminRole && !$superUser->hasRole($superAdminRole)) {
+            $superUser->assignRole($superAdminRole);
         }
 
-        // Buat 1 Akun Admin
-        $adminUser = User::factory()->create([
-            'name' => 'Admin Le Croissant',
-            'email' => 'admin@lecroissant.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'status' => 'Aktif',
-        ]);
-
-        // Assign role Admin menggunakan Spatie Permission
-        $adminUser->assignRole($adminRole);
-
-        // Buat 10 Akun Klien B2B
-        if ($anggotaRole) {
-            User::factory()->count(10)->create([
-                'role' => 'klien_b2b',
+        // --- [LAMA] Buat 1 Akun Admin (Staff Operasional) ---
+        // Kodingan lama Anda tetap di sini
+        $adminUser = User::updateOrCreate(
+            ['email' => 'admin@lecroissant.com'],
+            [
+                'name' => 'Admin Staff',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
                 'status' => 'Aktif',
-            ])->each(function ($user) use ($anggotaRole) {
-                // Assign role Anggota untuk klien B2B
-                $user->assignRole($anggotaRole);
-            });
+            ]
+        );
+
+        if ($adminRole && !$adminUser->hasRole($adminRole)) {
+            $adminUser->assignRole($adminRole);
+        }
+
+        // --- [LAMA] Buat 10 Akun Klien B2B (Logika Factory Tetap) ---
+        $existingKlienCount = User::where('role', 'klien_b2b')->count();
+        $neededKlienCount = max(0, 10 - $existingKlienCount);
+
+        if ($neededKlienCount > 0) {
+            if ($anggotaRole) {
+                User::factory()->count($neededKlienCount)->create([
+                    'role' => 'klien_b2b',
+                    'status' => 'Aktif',
+                ])->each(function ($user) use ($anggotaRole) {
+                    if (!$user->hasRole($anggotaRole)) {
+                        $user->assignRole($anggotaRole);
+                    }
+                });
+            } else {
+                User::factory()->count($neededKlienCount)->create([
+                    'role' => 'klien_b2b',
+                    'status' => 'Aktif',
+                ]);
+            }
         } else {
-            // Jika role Anggota belum ada, buat user tanpa assign role
-            User::factory()->count(10)->create([
-                'role' => 'klien_b2b',
-                'status' => 'Aktif',
-            ]);
+            $this->command->info("Sudah ada {$existingKlienCount} user dengan role klien_b2b. Tidak perlu membuat user baru.");
         }
     }
 }
-

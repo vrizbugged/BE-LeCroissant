@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
@@ -83,26 +87,10 @@ class UserController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, User $user)
+    public function update(UserUpdateRequest $request, User $user)
     {
         try {
-            // Convert role ke lowercase sebelum validasi jika ada
-            $requestData = $request->all();
-            if (isset($requestData['role'])) {
-                $requestData['role'] = strtolower($requestData['role']);
-            }
-            $request->merge($requestData);
-
-            $validated = $request->validate([
-                'name' => ['sometimes', 'string', 'max:255'],
-                'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-                'password' => ['sometimes', 'string', 'min:8'],
-                'password_confirmation' => ['sometimes', 'string', 'same:password'],
-                'phone_number' => ['sometimes', 'nullable', 'string', 'max:50'],
-                'address' => ['sometimes', 'nullable', 'string'],
-                'role' => ['sometimes', Rule::in(['admin', 'klien_b2b'])],
-                'status' => ['sometimes', Rule::in(['Aktif', 'Non Aktif'])],
-            ]);
+            $validated = $request->validated();
 
             // Hapus password_confirmation dari validated karena tidak perlu disimpan
             unset($validated['password_confirmation']);
@@ -112,13 +100,33 @@ class UserController extends Controller
                 unset($validated['password']);
             }
 
-            // Password akan otomatis di-hash oleh Laravel karena ada cast 'hashed' di model
-            $user->update($validated);
+            // Extract role dari validated untuk di-handle terpisah
+            $roleName = $validated['role'] ?? null;
+            unset($validated['role']);
+
+            // Wrap dalam transaction untuk memastikan konsistensi data
+            $updatedUser = DB::transaction(function () use ($user, $validated, $roleName) {
+                // Update user fields
+                $user->update($validated);
+
+                // Sync roles jika role ada di request
+                if ($roleName) {
+                    $role = Role::where('name', $roleName)->first();
+                    if ($role) {
+                        $user->syncRoles([$role->name]);
+                    }
+                }
+
+                // Clear permission cache setelah role update
+                app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+                return $user->fresh()->load('roles');
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'User updated',
-                'data' => $user->fresh(),
+                'data' => $updatedUser,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

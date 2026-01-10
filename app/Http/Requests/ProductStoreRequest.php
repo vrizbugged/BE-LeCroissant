@@ -26,7 +26,7 @@ class ProductStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('products', 'nama_produk'),
+                Rule::unique('products', 'name'),
             ],
             'deskripsi' => 'required|string',
             'harga_grosir' => 'required|numeric|min:0', // Sesuai kebutuhan harga B2B

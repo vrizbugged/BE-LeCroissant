@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrderDetailController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ActivityLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::middleware('permission:mengelola roles')->group(function () {
         Route::apiResource('permissions', PermissionController::class);
+    });
+
+    // ---------------------------------------------------------------------
+    // ACTIVITY LOG
+    // ---------------------------------------------------------------------
+    Route::middleware('permission:melihat activity log')->group(function () {
+        Route::get('activity-logs', [ActivityLogController::class, 'index']);
+    });
+
+    Route::middleware('permission:mengekspor activity log')->group(function () {
+        Route::get('activity-logs/export', [ActivityLogController::class, 'export']);
     });
 
     // ---------------------------------------------------------------------

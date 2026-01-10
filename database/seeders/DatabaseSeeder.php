@@ -15,9 +15,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndPermissionSeeder::class, // 1. Buat role dan permission terlebih dahulu
             UserSeeder::class,             // 2. Buat user (membutuhkan role)
-            ProductSeeder::class,          // 3. Buat produk
-            ContentSeeder::class,          // 4. Buat konten statis
-            OrderSeeder::class,            // 5. Buat order (membutuhkan user dan produk)
+            ClientSeeder::class,           // 3. Buat client dari user klien_b2b
+            ProductSeeder::class,          // 4. Buat produk
+            OrderSeeder::class,            // 5. Buat order (membutuhkan client dan produk)
             InvoiceSeeder::class,          // 6. Buat invoice (membutuhkan order)
             // OrderDetailSeeder::class,   // Opsional: jika ingin membuat detail secara manual
         ]);
