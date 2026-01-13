@@ -64,34 +64,37 @@ class ProductController extends Controller
      */
     public function store(ProductStoreRequest $request): JsonResponse
     {
-        // Validasi gambar, harga numeric, dll sudah ditangani ProductStoreRequest
         $validated = $request->validated();
-        
-        // Handle gambar: bisa file upload atau URL string
+
         $imageUrl = null;
         if ($request->hasFile('gambar')) {
-            // File upload - validasi file
             $file = $request->file('gambar');
             $request->validate([
                 'gambar' => 'image|mimes:jpeg,png,jpg|max:2048',
             ]);
-            $path = $file->store('products', 'public'); // Simpan di storage/app/public/products
-            $imageUrl = $path; // Simpan path relatif untuk digunakan dengan Storage::url()
+
+            // Simpan file fisik
+            $path = $file->store('products', 'public');
+
+            // --- PERBAIKAN DI SINI ---
+            // Gunakan helper url() untuk mengubah 'products/img.jpg'
+            // menjadi 'http://localhost:8000/storage/products/img.jpg'
+            $imageUrl = url('storage/' . $path);
+            // -------------------------
+
         } elseif ($request->filled('gambar') && filter_var($request->input('gambar'), FILTER_VALIDATE_URL)) {
-            // URL string
             $imageUrl = $request->input('gambar');
         }
-        
-        // Map field dari request ke field database
+
         $data = [
             'name' => $validated['nama_produk'],
             'description' => $validated['deskripsi'],
             'price_b2b' => $validated['harga_grosir'],
             'stock' => $validated['ketersediaan_stok'],
-            'image_url' => $imageUrl,
+            'image_url' => $imageUrl, // Sekarang isinya link lengkap
             'status' => $validated['status'] ?? 'Aktif',
         ];
-        
+
         $product = $this->productService->createProduct($data);
 
         if (!$product) {
@@ -135,7 +138,7 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, string $id): JsonResponse
     {
         $validated = $request->validated();
-        
+
         // Map field dari request ke field database
         $data = [];
         if (isset($validated['nama_produk'])) {
@@ -150,34 +153,44 @@ class ProductController extends Controller
         if (isset($validated['ketersediaan_stok'])) {
             $data['stock'] = $validated['ketersediaan_stok'];
         }
-        
+
         // Handle gambar: bisa file upload atau URL string
         if ($request->hasFile('gambar')) {
-            // File upload - validasi file
             $file = $request->file('gambar');
             $request->validate([
                 'gambar' => 'image|mimes:jpeg,png,jpg|max:2048',
             ]);
-            
-            // Hapus file lama jika ada
+
+            // Ambil data produk lama untuk hapus gambar lama
             $product = $this->productService->getProductById($id);
-            if ($product && $product->image_url && !filter_var($product->image_url, FILTER_VALIDATE_URL)) {
-                // Hanya hapus jika bukan URL eksternal
-                Storage::disk('public')->delete($product->image_url);
+
+            // --- PERBAIKAN LOGIKA HAPUS GAMBAR LAMA ---
+            if ($product && $product->image_url) {
+                // Cek apakah ini gambar dari server sendiri (bukan link google/eksternal)
+                if (str_contains($product->image_url, url('storage/'))) {
+                    // Kita harus ubah URL lengkap kembali menjadi path relatif agar bisa dihapus
+                    // Contoh: http://localhost:8000/storage/products/abc.jpg -> products/abc.jpg
+                    $oldPath = str_replace(url('storage/') . '/', '', $product->image_url);
+                    Storage::disk('public')->delete($oldPath);
+                }
             }
-            
+            // ------------------------------------------
+
             // Simpan file baru
             $path = $file->store('products', 'public');
-            $data['image_url'] = $path;
+
+            // --- PERBAIKAN SIMPAN URL BARU ---
+            $data['image_url'] = url('storage/' . $path);
+            // ---------------------------------
+
         } elseif ($request->filled('gambar') && filter_var($request->input('gambar'), FILTER_VALIDATE_URL)) {
-            // URL string
             $data['image_url'] = $request->input('gambar');
         }
-        
+
         if (isset($validated['status'])) {
             $data['status'] = $validated['status'];
         }
-        
+
         $product = $this->productService->updateProduct($id, $data);
 
         if (!$product) {

@@ -8,36 +8,37 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  Request  $request
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
+        // Logika Gambar yang Paling Aman
+        $imageUrl = null;
+        if ($this->image_url) {
+            // Jika sudah link lengkap (http...), pakai langsung. Jika belum, tambahkan domain.
+            $imageUrl = filter_var($this->image_url, FILTER_VALIDATE_URL)
+                ? $this->image_url
+                : url('storage/' . $this->image_url);
+        }
+
         return [
             'id' => $this->id,
-            'nama_produk' => $this->nama_produk,
-            'deskripsi' => $this->deskripsi,
 
-            // Format harga grosir agar mudah dibaca di frontend [Ref Proposal: 107]
-            'harga_grosir' => (float) $this->harga_grosir,
-            'harga_formatted' => 'Rp ' . number_format($this->harga_grosir, 0, ',', '.'),
+            // Mapping Data (Kanan: Database -> Kiri: Frontend)
+            'nama_produk' => $this->name ?? 'Produk Tanpa Nama',
+            'deskripsi'   => $this->description ?? '',
 
-            // Manajemen stok sesuai ruang lingkup Admin [Ref Proposal: 106]
-            'ketersediaan_stok' => (int) $this->ketersediaan_stok,
+            // Harga (Penting untuk Cart & Shop)
+            'harga_grosir'=> (float) ($this->price_b2b ?? 0),
+            'harga_formatted' => 'Rp ' . number_format((float) ($this->price_b2b ?? 0), 0, ',', '.'),
 
-            // Mengubah path database menjadi URL lengkap agar gambar muncul di Next.js
-            // Jika gambar adalah URL lengkap, gunakan langsung. Jika path, convert ke URL
-            'gambar_url' => $this->image_url ? (
-                filter_var($this->image_url, FILTER_VALIDATE_URL) 
-                    ? $this->image_url 
-                    : Storage::disk('public')->url($this->image_url)
-            ) : null,
+            // Stok
+            'ketersediaan_stok' => (int) ($this->stock ?? 0),
 
-            'status' => $this->status, // Aktif atau Non Aktif
+            // Gambar (Penting untuk Shop)
+            'image_url' => $imageUrl,
+            // Kita kirim 'gambar_url' juga sebagai cadangan jika frontend pakai nama lama
+            'gambar_url' => $imageUrl,
 
+            'status' => $this->status ?? 'Non Aktif',
             'created_at' => $this->created_at ? $this->created_at->toDateTimeString() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toDateTimeString() : null,
         ];

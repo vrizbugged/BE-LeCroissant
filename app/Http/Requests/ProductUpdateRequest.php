@@ -22,15 +22,17 @@ class ProductUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $product = $this->route('product');
-        $productId = $product instanceof Product ? $product->id : $product;
+        $routeParam = $this->route('product') ?? $this->route('id');
+
+        // Pastikan kita mendapatkan ID (integer/string), bukan Object Model utuh
+        $productId = $routeParam instanceof Product ? $routeParam->id : $routeParam;
 
         return [
             'nama_produk' => [
                 'required',
                 'string',
                 'max:255',
-                // Mengabaikan ID produk yang sedang diedit agar tidak dianggap duplikat
+                // Sekarang $productId dijamin ada isinya, validasi unique akan benar mengabaikan data ini
                 Rule::unique('products', 'name')->ignore($productId),
             ],
             'deskripsi' => 'required|string',
