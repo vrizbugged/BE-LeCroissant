@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -84,13 +85,22 @@ class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $minPurchaseQuantity = 10;
+        
         $validated = $request->validate([
-            'delivery_date' => ['required', 'date', 'after:today'],
+            'delivery_date' => ['nullable', 'date', 'after:today'],
             'special_notes' => ['nullable', 'string', 'max:500'],
             'products' => ['required', 'array', 'min:1'],
             'products.*.id' => ['required', 'exists:products,id'],
-            'products.*.quantity' => ['required', 'integer', 'min:1'],
+            'products.*.quantity' => ['required', 'integer', 'min:' . $minPurchaseQuantity],
+        ], [
+            'products.*.quantity.min' => 'Minimal pembelian adalah ' . $minPurchaseQuantity . ' unit per produk',
         ]);
+        
+        // Set default delivery_date jika tidak dikirim (7 hari dari sekarang)
+        if (!isset($validated['delivery_date'])) {
+            $validated['delivery_date'] = now()->addDays(7)->format('Y-m-d');
+        }
 
         // Get or create client for the user
         $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
@@ -109,37 +119,75 @@ class OrderController extends Controller
             ]);
         }
         
-        // Buat order
-        $order = Order::create([
-            'client_id' => $client->id,
-            'delivery_date' => $validated['delivery_date'],
-            'special_notes' => $validated['special_notes'] ?? null,
-            'status' => 'menunggu_konfirmasi',
-            'total_price' => 0,
-        ]);
-
-        // Attach products dan hitung total
-        $totalPrice = 0;
+        // Validasi stock tersedia sebelum membuat order
+        $productsToValidate = [];
         foreach ($validated['products'] as $product) {
             $productModel = \App\Models\Product::findOrFail($product['id']);
-            $priceAtPurchase = $productModel->price_b2b;
-
-            $order->products()->attach($product['id'], [
-                'quantity' => $product['quantity'],
-                'price_at_purchase' => $priceAtPurchase,
+            
+            // Validasi stock tersedia
+            if ($productModel->stock < $product['quantity']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Stok produk '{$productModel->name}' tidak mencukupi. Stok tersedia: {$productModel->stock} unit, yang diminta: {$product['quantity']} unit",
+                ], 422);
+            }
+            
+            $productsToValidate[] = [
+                'model' => $productModel,
+                'data' => $product,
+            ];
+        }
+        
+        // Gunakan DB transaction untuk memastikan atomicity
+        try {
+            DB::beginTransaction();
+            
+            // Buat order
+            $order = Order::create([
+                'client_id' => $client->id,
+                'delivery_date' => $validated['delivery_date'],
+                'special_notes' => $validated['special_notes'] ?? null,
+                'status' => 'menunggu_konfirmasi',
+                'total_price' => 0,
             ]);
 
-            $totalPrice += $priceAtPurchase * $product['quantity'];
+            // Attach products, hitung total, dan update stock
+            $totalPrice = 0;
+            foreach ($productsToValidate as $item) {
+                $productModel = $item['model'];
+                $product = $item['data'];
+                $priceAtPurchase = $productModel->price_b2b;
+
+                // Attach product ke order
+                $order->products()->attach($product['id'], [
+                    'quantity' => $product['quantity'],
+                    'price_at_purchase' => $priceAtPurchase,
+                ]);
+
+                // Update stock (decrease)
+                $productModel->decrement('stock', $product['quantity']);
+
+                $totalPrice += $priceAtPurchase * $product['quantity'];
+            }
+
+            // Update total price
+            $order->update(['total_price' => $totalPrice]);
+            
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order berhasil dibuat',
+                'data' => $order->load(['client', 'client.user', 'products']),
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat order: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Update total price
-        $order->update(['total_price' => $totalPrice]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order berhasil dibuat',
-            'data' => $order->load(['client', 'client.user', 'products']),
-        ], 201);
     }
 
     /**

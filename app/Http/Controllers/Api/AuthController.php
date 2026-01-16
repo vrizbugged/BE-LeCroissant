@@ -28,6 +28,9 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
+        // Load roles relationship (same as login)
+        $user->load('roles');
+
         return response()->json([
             'success' => true,
             'message' => 'Registered successfully',
