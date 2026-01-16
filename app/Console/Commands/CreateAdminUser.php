@@ -42,7 +42,7 @@ class CreateAdminUser extends Command
             if ($this->confirm("Admin dengan email {$email} sudah ada. Apakah Anda ingin mengupdate password?", true)) {
                 $adminUser->password = Hash::make($password);
                 $adminUser->name = $name;
-                $adminUser->role = 'admin';
+                // Role dihapus - menggunakan Spatie Permission
                 $adminUser->status = 'Aktif';
                 $adminUser->save();
 
@@ -75,7 +75,7 @@ class CreateAdminUser extends Command
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
-            'role' => 'admin',
+            // Role dihapus - menggunakan Spatie Permission
             'status' => 'Aktif',
         ]);
 

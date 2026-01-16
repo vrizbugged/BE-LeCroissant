@@ -28,7 +28,7 @@ class User extends Authenticatable
         'password',
         'phone_number', // <-- Kolom baru Anda
         'address',      // <-- Kolom baru Anda
-        'role',         // <-- Kolom baru Anda
+        // 'role' removed - menggunakan Spatie Permission roles relationship
         'status',       // <-- Status user (Aktif/Non Aktif)
         // Field B2B sudah dipindah ke model Client terpisah
     ];

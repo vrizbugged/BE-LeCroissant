@@ -33,7 +33,7 @@ class UserFactory extends Factory
             // ---- KOLOM BARU KITA ----
             'phone_number' => fake()->phoneNumber(),
             'address' => fake()->address(),
-            'role' => 'klien_b2b', // Default user palsu adalah klien
+            // 'role' dihapus - menggunakan Spatie Permission roles relationship
             'status' => 'Aktif', // Default status adalah Aktif
             // -------------------------
 

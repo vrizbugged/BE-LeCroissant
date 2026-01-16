@@ -50,13 +50,6 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // Convert role ke lowercase sebelum validasi jika ada
-        $requestData = $request->all();
-        if (isset($requestData['role'])) {
-            $requestData['role'] = strtolower($requestData['role']);
-        }
-        $request->merge($requestData);
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -64,7 +57,7 @@ class UserController extends Controller
             'password_confirmation' => ['sometimes', 'string', 'same:password'],
             'phone_number' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string'],
-            'role' => ['nullable', Rule::in(['admin', 'klien_b2b'])],
+            'role' => ['nullable', Rule::exists('roles', 'name')], // Menggunakan Spatie Permission roles
             'status' => ['nullable', Rule::in(['Aktif', 'Non Aktif'])],
         ]);
 
@@ -73,12 +66,29 @@ class UserController extends Controller
             $validated['status'] = 'Aktif';
         }
 
+        // Extract role dari validated untuk di-handle terpisah dengan Spatie
+        $roleName = $validated['role'] ?? null;
+        unset($validated['role']);
+
         // Hapus password_confirmation dari validated karena tidak perlu disimpan
         unset($validated['password_confirmation']);
 
         // Password akan otomatis di-hash oleh Laravel karena ada cast 'hashed' di model
 
-        $user = User::create($validated);
+        // Wrap dalam transaction untuk memastikan konsistensi data
+        $user = DB::transaction(function () use ($validated, $roleName) {
+            $user = User::create($validated);
+
+            // Assign role menggunakan Spatie Permission jika role ada
+            if ($roleName) {
+                $role = Role::where('name', $roleName)->first();
+                if ($role) {
+                    $user->assignRole($role);
+                }
+            }
+
+            return $user->fresh()->load('roles');
+        });
 
         return response()->json([
             'success' => true,

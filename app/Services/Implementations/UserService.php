@@ -97,11 +97,14 @@ class UserService implements UserServiceInterface
     public function createUser(array $data)
     {
         $role = $data['role'] ?? null;
+        
+        // Hapus role dari data karena tidak disimpan di kolom role (menggunakan Spatie Permission)
+        unset($data['role']);
 
         // Membuat user baru
         $user = $this->repository->createUser($data);
 
-        // Sinkronisasi permissions
+        // Assign role menggunakan Spatie Permission
         if ($user && $role) {
             $user->assignRole($role);
         }
@@ -122,11 +125,14 @@ class UserService implements UserServiceInterface
     public function updateUser($id, array $data)
     {
         $role = $data['role'] ?? null;
+        
+        // Hapus role dari data karena tidak disimpan di kolom role (menggunakan Spatie Permission)
+        unset($data['role']);
 
         // Memperbarui user
         $user = $this->repository->updateUser($id, $data);
 
-        // Sinkronisasi permissions
+        // Sync roles menggunakan Spatie Permission
         if ($role && $user) {
             $user->syncRoles([$role]);
         }

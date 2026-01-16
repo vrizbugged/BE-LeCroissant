@@ -29,8 +29,11 @@ class DashboardController extends Controller
         $activeProducts = Product::where('stock', '>', 0)
             ->count();
 
-        // Total klien B2B (users dengan role klien_b2b yang status Aktif)
-        $totalClients = User::where('role', 'klien_b2b')
+        // Total klien B2B (users dengan role Anggota yang status Aktif)
+        // Menggunakan Spatie Permission role relationship
+        $totalClients = User::whereHas('roles', function ($query) {
+                $query->where('name', 'Anggota');
+            })
             ->where('status', 'Aktif')
             ->count();
 

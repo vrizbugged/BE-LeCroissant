@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Super Owner',
                 'password' => Hash::make('password123'), // Password Super Admin
-                'role' => 'super_admin', // Label string di DB
+                // Role dihapus - menggunakan Spatie Permission
                 'status' => 'Aktif',
             ]
         );
@@ -43,7 +43,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin Staff',
                 'password' => Hash::make('admin123'),
-                'role' => 'admin',
+                // Role dihapus - menggunakan Spatie Permission
                 'status' => 'Aktif',
             ]
         );
@@ -53,13 +53,18 @@ class UserSeeder extends Seeder
         }
 
         // --- [LAMA] Buat 10 Akun Klien B2B (Logika Factory Tetap) ---
-        $existingKlienCount = User::where('role', 'klien_b2b')->count();
+        // Menggunakan Spatie Permission role relationship
+        $existingKlienCount = User::whereHas('roles', function ($query) use ($anggotaRole) {
+            if ($anggotaRole) {
+                $query->where('name', $anggotaRole->name);
+            }
+        })->count();
         $neededKlienCount = max(0, 10 - $existingKlienCount);
 
         if ($neededKlienCount > 0) {
             if ($anggotaRole) {
                 User::factory()->count($neededKlienCount)->create([
-                    'role' => 'klien_b2b',
+                    // Role dihapus - menggunakan Spatie Permission
                     'status' => 'Aktif',
                 ])->each(function ($user) use ($anggotaRole) {
                     if (!$user->hasRole($anggotaRole)) {
@@ -68,12 +73,12 @@ class UserSeeder extends Seeder
                 });
             } else {
                 User::factory()->count($neededKlienCount)->create([
-                    'role' => 'klien_b2b',
+                    // Role dihapus - menggunakan Spatie Permission
                     'status' => 'Aktif',
                 ]);
             }
         } else {
-            $this->command->info("Sudah ada {$existingKlienCount} user dengan role klien_b2b. Tidak perlu membuat user baru.");
+            $this->command->info("Sudah ada {$existingKlienCount} user dengan role Anggota. Tidak perlu membuat user baru.");
         }
     }
 }

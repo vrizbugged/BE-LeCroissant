@@ -13,8 +13,10 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ambil semua user dengan role klien_b2b
-        $klienUsers = User::where('role', 'klien_b2b')->get();
+        // Ambil semua user dengan role Anggota menggunakan Spatie Permission
+        $klienUsers = User::whereHas('roles', function ($query) {
+            $query->where('name', 'Anggota');
+        })->get();
 
         if ($klienUsers->isEmpty()) {
             $this->command->warn('Tidak ada user dengan role klien_b2b. Pastikan UserSeeder sudah dijalankan terlebih dahulu.');
