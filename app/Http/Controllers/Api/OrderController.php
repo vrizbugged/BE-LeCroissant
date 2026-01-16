@@ -92,7 +92,7 @@ class OrderController extends Controller
             'address' => ['required', 'string', 'min:1'],
             'delivery_date' => ['nullable', 'date', 'after:today'],
             'special_notes' => ['nullable', 'string', 'max:500'],
-            'payment_proof' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'], // Max 5MB
+            'payment_proof' => ['required', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'], // Max 5MB, required
             'products' => ['required', 'array', 'min:1'],
             'products.*.id' => ['required', 'exists:products,id'],
             'products.*.quantity' => ['required', 'integer', 'min:' . $minPurchaseQuantity],
@@ -101,6 +101,7 @@ class OrderController extends Controller
             'phone_number.min' => 'Nomor telepon tidak boleh kosong',
             'address.required' => 'Alamat wajib diisi',
             'address.min' => 'Alamat tidak boleh kosong',
+            'payment_proof.required' => 'Bukti pembayaran wajib diupload',
             'payment_proof.file' => 'Bukti pembayaran harus berupa file',
             'payment_proof.mimes' => 'Bukti pembayaran harus berupa gambar (JPG, PNG) atau PDF',
             'payment_proof.max' => 'Ukuran file bukti pembayaran maksimal 5MB',
