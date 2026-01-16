@@ -252,7 +252,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'delivery_date' => ['sometimes', 'date'],
             'special_notes' => ['sometimes', 'nullable', 'string', 'max:500'],
-            'status' => ['sometimes', 'in:menunggu_konfirmasi,diproses,selesai,dibatalkan'],
+            'status' => ['sometimes', 'in:menunggu_konfirmasi,diproses,siap_di_pickup,selesai,dibatalkan'],
         ]);
 
         $order->update($validated);
@@ -305,7 +305,7 @@ class OrderController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['required', 'in:menunggu_konfirmasi,diproses,selesai,dibatalkan'],
+            'status' => ['required', 'in:menunggu_konfirmasi,diproses,siap_di_pickup,selesai,dibatalkan'],
         ]);
 
         $order->update(['status' => $validated['status']]);
