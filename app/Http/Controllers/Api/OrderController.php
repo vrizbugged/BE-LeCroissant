@@ -88,12 +88,29 @@ class OrderController extends Controller
         $minPurchaseQuantity = 10;
         
         $validated = $request->validate([
+            'phone_number' => ['required', 'string', 'min:1'],
+            'address' => ['required', 'string', 'min:1'],
             'delivery_date' => ['nullable', 'date', 'after:today'],
             'special_notes' => ['nullable', 'string', 'max:500'],
+            'payment_proof' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'], // Max 5MB
             'products' => ['required', 'array', 'min:1'],
             'products.*.id' => ['required', 'exists:products,id'],
             'products.*.quantity' => ['required', 'integer', 'min:' . $minPurchaseQuantity],
         ], [
+            'phone_number.required' => 'Nomor telepon wajib diisi',
+            'phone_number.min' => 'Nomor telepon tidak boleh kosong',
+            'address.required' => 'Alamat wajib diisi',
+            'address.min' => 'Alamat tidak boleh kosong',
+            'payment_proof.file' => 'Bukti pembayaran harus berupa file',
+            'payment_proof.mimes' => 'Bukti pembayaran harus berupa gambar (JPG, PNG) atau PDF',
+            'payment_proof.max' => 'Ukuran file bukti pembayaran maksimal 5MB',
+            'products.required' => 'Produk wajib dipilih',
+            'products.array' => 'Produk harus berupa array',
+            'products.min' => 'Minimal harus ada 1 produk',
+            'products.*.id.required' => 'ID produk wajib diisi',
+            'products.*.id.exists' => 'Produk tidak ditemukan',
+            'products.*.quantity.required' => 'Jumlah produk wajib diisi',
+            'products.*.quantity.integer' => 'Jumlah produk harus berupa angka',
             'products.*.quantity.min' => 'Minimal pembelian adalah ' . $minPurchaseQuantity . ' unit per produk',
         ]);
         
@@ -105,17 +122,23 @@ class OrderController extends Controller
         // Get or create client for the user
         $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
         if (!$client) {
-            // Create client if doesn't exist
+            // Create client if doesn't exist with data from request
             $client = \App\Models\Client::create([
                 'user_id' => $request->user()->id,
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
-                'phone_number' => $request->user()->phone_number,
-                'address' => $request->user()->address,
-                'company_name' => $request->user()->company_name,
+                'phone_number' => $validated['phone_number'],
+                'address' => $validated['address'],
+                'company_name' => $request->user()->company_name ?? null,
                 'business_sector' => $request->user()->business_sector ?? 'Perusahaan Lain',
                 'citizenship' => $request->user()->citizenship ?? 'WNI',
                 'status' => 'Aktif',
+            ]);
+        } else {
+            // Update client with new phone_number and address from request
+            $client->update([
+                'phone_number' => $validated['phone_number'],
+                'address' => $validated['address'],
             ]);
         }
         
@@ -144,6 +167,7 @@ class OrderController extends Controller
             
             // Buat order
             $order = Order::create([
+                'user_id' => $request->user()->id, // Required field untuk backward compatibility
                 'client_id' => $client->id,
                 'delivery_date' => $validated['delivery_date'],
                 'special_notes' => $validated['special_notes'] ?? null,

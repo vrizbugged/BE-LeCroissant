@@ -15,6 +15,7 @@ class Order extends Model
      * Atribut yang dapat diisi secara massal.
      */
     protected $fillable = [
+        'user_id',        // Relasi ke User (untuk backward compatibility)
         'client_id',      // Relasi ke Client (menggantikan user_id)
         'delivery_date',
         'status',
