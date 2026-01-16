@@ -41,7 +41,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Auth Actions
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        if ($user) {
+            // Load relasi yang diperlukan termasuk Client
+            $user->load(['roles', 'client']);
+        }
+        return $user;
     });
 
     // ---------------------------------------------------------------------

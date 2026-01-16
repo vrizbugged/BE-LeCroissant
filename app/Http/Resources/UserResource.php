@@ -28,8 +28,24 @@ class UserResource extends JsonResource
             'business_sector' => $this->business_sector,
             'citizenship' => $this->citizenship,
             'phone_number' => $this->phone_number,
+            'address' => $this->address,
 
             'status' => $this->status,
+
+            // Include Client data jika ada (untuk auto-fill checkout form)
+            'client' => $this->whenLoaded('client', function () {
+                return [
+                    'id' => $this->client->id,
+                    'name' => $this->client->name,
+                    'email' => $this->client->email,
+                    'phone_number' => $this->client->phone_number,
+                    'address' => $this->client->address,
+                    'company_name' => $this->client->company_name,
+                    'business_sector' => $this->client->business_sector,
+                    'citizenship' => $this->client->citizenship,
+                    'status' => $this->client->status,
+                ];
+            }),
 
             // Format tanggal yang rapi untuk Dashboard Shadcn
             'created_at' => $this->created_at ? $this->created_at->toDateTimeString() : null,
