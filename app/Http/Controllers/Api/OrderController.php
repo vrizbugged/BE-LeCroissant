@@ -132,7 +132,6 @@ class OrderController extends Controller
                 'address' => $validated['address'],
                 'company_name' => $request->user()->company_name ?? null,
                 'business_sector' => $request->user()->business_sector ?? 'Perusahaan Lain',
-                'citizenship' => $request->user()->citizenship ?? 'WNI',
                 'status' => 'Aktif',
             ]);
         } else {

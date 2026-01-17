@@ -36,13 +36,6 @@ interface ClientRepositoryInterface
      */
     public function getClientsByStatus($status);
 
-    /**
-     * Get clients by citizenship (WNI/WNA)
-     * [Ref Proposal: Membedakan klien lokal dan asing]
-     * * @param string $citizenship
-     * * @return Collection
-     */
-    public function getClientsByCitizenship($citizenship);
 
     /**
      * Get client by email and status

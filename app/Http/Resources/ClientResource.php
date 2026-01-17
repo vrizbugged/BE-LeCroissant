@@ -24,9 +24,6 @@ class ClientResource extends JsonResource
             // Informasi Profil Bisnis B2B
             'company_name' => $this->company_name,
             'business_sector' => $this->business_sector,
-
-            // Variabel Demografi Penelitian
-            'citizenship' => $this->citizenship,
             'address' => $this->address,
 
             // Status Akun (Pending, Aktif, Non Aktif)

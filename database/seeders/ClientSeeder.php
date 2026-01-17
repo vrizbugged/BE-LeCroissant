@@ -34,7 +34,6 @@ class ClientSeeder extends Seeder
                     'address' => $user->address,
                     'company_name' => $user->company_name,
                     'business_sector' => $user->business_sector ?? 'Perusahaan Lain',
-                    'citizenship' => $user->citizenship ?? 'WNI',
                     'status' => 'Aktif', // Set status aktif untuk klien yang sudah dibuat
                 ]
             );

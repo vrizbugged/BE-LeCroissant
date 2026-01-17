@@ -40,9 +40,6 @@ class ClientUpdateRequest extends FormRequest
             // Data Bisnis B2B [Ref Proposal: 109, 329]
         'company_name' => 'required|string|max:255',
             'business_sector' => 'required|in:Hotel,Restoran,Event Organizer,Perusahaan Lain',
-
-            // Variabel Demografi [Ref Proposal: 338]
-            'citizenship' => 'required|in:WNI,WNA',
             'address' => 'required|string',
 
             'status' => 'required|in:Pending,Aktif,Non Aktif',

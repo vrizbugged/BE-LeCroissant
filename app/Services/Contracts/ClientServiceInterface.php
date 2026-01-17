@@ -29,13 +29,6 @@ interface ClientServiceInterface
      */
     public function getClientsByBusinessSector($sector);
 
-    /**
-     * Get clients by citizenship
-     * [Ref Proposal: Membedakan klien lokal (WNI) dan asing (WNA)]
-     * * @param string $citizenship
-     * * @return Collection
-     */
-    public function getClientsByCitizenship($citizenship);
 
     /**
      * Get client by email and business status

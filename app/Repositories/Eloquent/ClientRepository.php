@@ -66,16 +66,6 @@ class ClientRepository implements ClientRepositoryInterface
         return $this->model->where('status', $status)->get();
     }
 
-    /**
-     * Mengambil klien berdasarkan kewarganegaraan (WNI/WNA).
-     * [Ref Proposal: Membedakan klien lokal dan asing]
-     * * @param string $citizenship
-     * * @return Collection
-     */
-    public function getClientsByCitizenship($citizenship): Collection
-    {
-        return $this->model->where('citizenship', $citizenship)->get();
-    }
 
     /**
      * Mengambil klien berdasarkan email dan status.

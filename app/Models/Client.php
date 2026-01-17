@@ -24,7 +24,6 @@ class Client extends Model
         'address',            // Alamat
         'company_name',      // Nama perusahaan
         'business_sector',   // Sektor bisnis (Hotel, Restoran, Event Organizer, Perusahaan Lain)
-        'citizenship',       // Kewarganegaraan (WNI/WNA)
         'status',            // Status (Pending, Aktif, Non Aktif)
     ];
 

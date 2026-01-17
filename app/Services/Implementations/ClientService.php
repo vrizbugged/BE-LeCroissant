@@ -56,16 +56,6 @@ class ClientService implements ClientServiceInterface
         return $this->clientRepository->getClientsBySector($sector);
     }
 
-    /**
-     * Mengambil klien berdasarkan kewarganegaraan.
-     * [Ref Proposal: Membedakan antara klien lokal dan asing] [cite: 339]
-     * * @param string $citizenship
-     * @return Collection
-     */
-    public function getClientsByCitizenship($citizenship)
-    {
-        return $this->clientRepository->getClientsByCitizenship($citizenship);
-    }
 
     /**
      * Mengambil klien berdasarkan email dan status.

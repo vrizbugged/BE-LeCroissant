@@ -33,14 +33,11 @@ class ClientController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Fitur Filter Lanjutan untuk Analisis Pasar
-        // Contoh: /api/clients?sector=Hotel atau /api/clients?citizenship=WNA
+        // Contoh: /api/clients?sector=Hotel
         $sector = $request->query('sector');
-        $citizenship = $request->query('citizenship');
 
         if ($sector) {
             $clients = $this->clientService->getClientsByBusinessSector($sector);
-        } elseif ($citizenship) {
-            $clients = $this->clientService->getClientsByCitizenship($citizenship);
         } else {
             $clients = $this->clientService->getAllClients();
         }

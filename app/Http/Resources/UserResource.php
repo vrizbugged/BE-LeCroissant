@@ -42,7 +42,6 @@ class UserResource extends JsonResource
                     'address' => $this->client->address,
                     'company_name' => $this->client->company_name,
                     'business_sector' => $this->client->business_sector,
-                    'citizenship' => $this->client->citizenship,
                     'status' => $this->client->status,
                 ];
             }),
