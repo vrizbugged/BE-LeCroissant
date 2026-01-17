@@ -49,7 +49,7 @@ class OrderController extends Controller
     {
         // Get client for the logged in user
         $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
-        
+
         if (!$client) {
             return response()->json([
                 'success' => true,
@@ -62,7 +62,7 @@ class OrderController extends Controller
                 ],
             ]);
         }
-        
+
         $orders = Order::with(['client', 'client.user', 'products', 'invoice'])
             ->where('client_id', $client->id)
             ->orderByDesc('created_at')
@@ -86,7 +86,7 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $minPurchaseQuantity = 10;
-        
+
         $validated = $request->validate([
             'phone_number' => ['required', 'string', 'min:1'],
             'address' => ['required', 'string', 'min:1'],
@@ -114,7 +114,7 @@ class OrderController extends Controller
             'products.*.quantity.integer' => 'Jumlah produk harus berupa angka',
             'products.*.quantity.min' => 'Minimal pembelian adalah ' . $minPurchaseQuantity . ' unit per produk',
         ]);
-        
+
         // Set default delivery_date jika tidak dikirim (7 hari dari sekarang)
         if (!isset($validated['delivery_date'])) {
             $validated['delivery_date'] = now()->addDays(7)->format('Y-m-d');
@@ -142,12 +142,12 @@ class OrderController extends Controller
                 'address' => $validated['address'],
             ]);
         }
-        
+
         // Validasi stock tersedia sebelum membuat order
         $productsToValidate = [];
         foreach ($validated['products'] as $product) {
             $productModel = \App\Models\Product::findOrFail($product['id']);
-            
+
             // Validasi stock tersedia
             if ($productModel->stock < $product['quantity']) {
                 return response()->json([
@@ -155,17 +155,17 @@ class OrderController extends Controller
                     'message' => "Stok produk '{$productModel->name}' tidak mencukupi. Stok tersedia: {$productModel->stock} unit, yang diminta: {$product['quantity']} unit",
                 ], 422);
             }
-            
+
             $productsToValidate[] = [
                 'model' => $productModel,
                 'data' => $product,
             ];
         }
-        
+
         // Gunakan DB transaction untuk memastikan atomicity
         try {
             DB::beginTransaction();
-            
+
             // Buat order
             $order = Order::create([
                 'user_id' => $request->user()->id, // Required field untuk backward compatibility
@@ -197,7 +197,7 @@ class OrderController extends Controller
 
             // Update total price
             $order->update(['total_price' => $totalPrice]);
-            
+
             DB::commit();
 
             return response()->json([
@@ -207,7 +207,7 @@ class OrderController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat order: ' . $e->getMessage(),
@@ -253,6 +253,9 @@ class OrderController extends Controller
             'delivery_date' => ['sometimes', 'date'],
             'special_notes' => ['sometimes', 'nullable', 'string', 'max:500'],
             'status' => ['sometimes', 'in:menunggu_konfirmasi,diproses,siap_di_pickup,selesai,dibatalkan'],
+            'cancellation_reason' => ['required_if:status,dibatalkan', 'nullable', 'string', 'max:500'],
+        ], [
+            'cancellation_reason.required_if' => 'Alasan pembatalan wajib diisi saat membatalkan pesanan.',
         ]);
 
         $order->update($validated);
@@ -306,9 +309,22 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', 'in:menunggu_konfirmasi,diproses,siap_di_pickup,selesai,dibatalkan'],
+            'cancellation_reason' => ['required_if:status,dibatalkan', 'nullable', 'string', 'max:500'],
+        ], [
+            'cancellation_reason.required_if' => 'Alasan pembatalan wajib diisi saat membatalkan pesanan.',
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $updateData = ['status' => $validated['status']];
+
+        // Jika status dibatalkan, wajib ada cancellation_reason
+        if ($validated['status'] === 'dibatalkan' && isset($validated['cancellation_reason'])) {
+            $updateData['cancellation_reason'] = $validated['cancellation_reason'];
+        } elseif ($validated['status'] !== 'dibatalkan') {
+            // Jika status berubah dari dibatalkan ke status lain, hapus cancellation_reason
+            $updateData['cancellation_reason'] = null;
+        }
+
+        $order->update($updateData);
 
         return response()->json([
             'success' => true,

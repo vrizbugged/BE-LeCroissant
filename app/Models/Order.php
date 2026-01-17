@@ -19,6 +19,7 @@ class Order extends Model
         'client_id',      // Relasi ke Client (menggantikan user_id)
         'delivery_date',
         'status',
+        'cancellation_reason', // Alasan pembatalan pesanan
         'total_price',
         'special_notes',
     ];
