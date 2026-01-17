@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // DASHBOARD
     // ---------------------------------------------------------------------
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard/chart-data', [DashboardController::class, 'chartData']);
 
     // ---------------------------------------------------------------------
     // MANAJEMEN ROLE & PERMISSION
@@ -76,6 +77,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('permission:mengekspor activity log')->group(function () {
         Route::get('activity-logs/export', [ActivityLogController::class, 'export']);
     });
+
+    // Hidden feature: Clear activity logs (Super Admin only)
+    // This route is intentionally not documented and requires Super Admin role
+    Route::delete('activity-logs/clear', [ActivityLogController::class, 'clear']);
 
     // ---------------------------------------------------------------------
     // MANAJEMEN USER

@@ -72,5 +72,40 @@ class ActivityLogController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Clear all activity logs.
+     * Hidden feature - Only accessible by Super Admin.
+     *
+     * @return JsonResponse
+     */
+    public function clear(): JsonResponse
+    {
+        try {
+            // Check if user is Super Admin
+            $user = auth()->user();
+            if (!$user || !$user->hasRole('Super Admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Only Super Admin can clear activity logs.',
+                ], 403);
+            }
+
+            $deletedCount = $this->activityLogService->clearLogs();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully cleared {$deletedCount} activity log(s).",
+                'data' => [
+                    'deleted_count' => $deletedCount,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear activity logs: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
 

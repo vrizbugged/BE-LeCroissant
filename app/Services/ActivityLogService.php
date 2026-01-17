@@ -101,5 +101,16 @@ class ActivityLogService
 
         return $query->get();
     }
+
+    /**
+     * Clear all activity logs.
+     * Only accessible by Super Admin.
+     *
+     * @return int Number of deleted records
+     */
+    public function clearLogs(): int
+    {
+        return Activity::query()->delete();
+    }
 }
 
