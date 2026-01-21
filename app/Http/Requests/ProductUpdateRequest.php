@@ -22,9 +22,8 @@ class ProductUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        // ... logika pengambilan ID sudah benar ...
         $routeParam = $this->route('product') ?? $this->route('id');
-
-        // Pastikan kita mendapatkan ID (integer/string), bukan Object Model utuh
         $productId = $routeParam instanceof Product ? $routeParam->id : $routeParam;
 
         return [
@@ -32,13 +31,18 @@ class ProductUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                // Sekarang $productId dijamin ada isinya, validasi unique akan benar mengabaikan data ini
+                // Validasi unique ignore ID ini sudah benar
                 Rule::unique('products', 'name')->ignore($productId),
             ],
             'deskripsi' => 'required|string',
             'harga_grosir' => 'required|numeric|min:0',
             'ketersediaan_stok' => 'required|integer|min:0',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Nullable karena gambar tidak selalu diubah
+
+            // --- PERBAIKAN DI SINI ---
+            // Ubah 'gambar' menjadi 'image' agar sesuai dengan Controller & Spatie
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            // -------------------------
+
             'status' => 'required|in:Aktif,Non Aktif',
         ];
     }

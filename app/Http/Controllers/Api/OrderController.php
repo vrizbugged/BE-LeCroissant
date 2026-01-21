@@ -197,6 +197,12 @@ class OrderController extends Controller
             // Update total price
             $order->update(['total_price' => $totalPrice]);
 
+            // Simpan bukti pembayaran menggunakan Spatie Media Library
+            if ($request->hasFile('payment_proof')) {
+                $order->addMediaFromRequest('payment_proof')
+                    ->toMediaCollection('payment_proofs');
+            }
+
             DB::commit();
 
             return response()->json([

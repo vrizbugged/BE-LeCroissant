@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Order extends Model
+class Order extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, InteractsWithMedia;
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -83,5 +85,16 @@ class Order extends Model
             ->logOnly(['status', 'total_price', 'delivery_date'])
             ->logOnlyDirty()
             ->setDescriptionForEvent(fn(string $eventName) => "Order #{$this->id} {$eventName} - Status: {$this->status}");
+    }
+
+    /**
+     * Konfigurasi Media Library untuk Order.
+     * Collection 'payment_proofs' untuk menyimpan bukti pembayaran.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('payment_proofs')
+            ->singleFile() // Hanya satu bukti pembayaran per order
+            ->acceptsMimeTypes(['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']);
     }
 }

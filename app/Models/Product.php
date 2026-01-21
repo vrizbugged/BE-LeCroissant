@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, InteractsWithMedia;
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -19,7 +22,6 @@ class Product extends Model
         'description',
         'price_b2b',
         'stock',
-        'image_url',
         'status',
     ];
     
@@ -83,5 +85,16 @@ class Product extends Model
             ->logOnly(['name', 'price_b2b', 'stock', 'status'])
             ->logOnlyDirty()
             ->setDescriptionForEvent(fn(string $eventName) => "Product {$eventName} - {$this->name}");
+    }
+
+    /**
+     * Konfigurasi Media Library untuk Product.
+     * Collection 'products' untuk menyimpan gambar produk.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('products')
+            ->singleFile() // Hanya satu gambar per produk, gambar otomatis tertimpa saat update
+            ->acceptsMimeTypes(['image/jpeg', 'image/jpg', 'image/png']);
     }
 }

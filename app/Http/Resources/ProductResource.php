@@ -4,19 +4,20 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Logika Gambar yang Paling Aman
-        $imageUrl = null;
-        if ($this->image_url) {
-            // Jika sudah link lengkap (http...), pakai langsung. Jika belum, tambahkan domain.
-            $imageUrl = filter_var($this->image_url, FILTER_VALIDATE_URL)
-                ? $this->image_url
-                : url('storage/' . $this->image_url);
+        // Ambil gambar dari Spatie Media Library
+        $imageUrl = $this->getFirstMediaUrl('products');
+
+        // Tambahkan Cache Busting dengan timestamp updated_at
+        if ($imageUrl && $this->updated_at) {
+            // Tambahkan query string ?t= dengan timestamp untuk cache busting
+            $timestamp = $this->updated_at->timestamp;
+            $separator = strpos($imageUrl, '?') !== false ? '&' : '?';
+            $imageUrl = $imageUrl . $separator . 't=' . $timestamp;
         }
 
         return [
