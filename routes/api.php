@@ -30,6 +30,7 @@ Route::middleware(['throttle:6,1'])->group(function () {
     // Siapapun (Tamu/User) bisa melihat daftar & detail produk
 Route::middleware(['throttle:60,1'])->group(function () {
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/most-ordered', [ProductController::class, 'mostOrdered']);
     Route::get('products/{id}', [ProductController::class, 'show']);
 });
 

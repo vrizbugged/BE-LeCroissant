@@ -47,6 +47,39 @@ class ProductController extends Controller
     }
 
     /**
+     * Menampilkan produk paling banyak dipesan.
+     */
+    public function mostOrdered(Request $request): JsonResponse
+    {
+        $limit = (int) $request->query('limit', 3); // Default 3 produk
+
+        // Query produk dengan total quantity yang dipesan
+        $products = \App\Models\Product::query()
+            ->select('products.*')
+            ->selectRaw('COALESCE(SUM(order_details.quantity), 0) as total_ordered')
+            ->leftJoin('order_details', 'products.id', '=', 'order_details.product_id')
+            ->where('products.status', 'Aktif')
+            ->groupBy('products.id')
+            ->orderByDesc('total_ordered')
+            ->orderByDesc('products.created_at')
+            ->limit($limit)
+            ->get();
+
+        // Jika tidak ada produk yang pernah dipesan atau hasil kosong, ambil produk aktif terbaru
+        if ($products->isEmpty()) {
+            $products = \App\Models\Product::where('status', 'Aktif')
+                ->orderByDesc('created_at')
+                ->limit($limit)
+                ->get();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => ProductResource::collection($products)
+        ]);
+    }
+
+    /**
      * Menambahkan produk baru.
      */
     public function store(ProductStoreRequest $request): JsonResponse
