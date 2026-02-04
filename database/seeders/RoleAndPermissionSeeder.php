@@ -143,10 +143,10 @@ class RoleAndPermissionSeeder extends Seeder
             // Admin biasa TIDAK BOLEH melihat log atau mengubah role
         ]);
 
-        // --- 3. ANGGOTA (Klien B2B) ---
+        // --- 3. CLIENT (Klien B2B) ---
         // Permission terbatas untuk belanja
-        $anggota = Role::firstOrCreate(['name' => 'Anggota']);
-        $anggota->syncPermissions([
+        $client = Role::firstOrCreate(['name' => 'Client']);
+        $client->syncPermissions([
             // Katalog
             'melihat produk',
 

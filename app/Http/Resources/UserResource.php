@@ -20,8 +20,17 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
 
-            // Mengambil nama role pertama (Admin atau Klien B2B)
+            // Mengambil nama role pertama (Admin atau Klien B2B) - untuk backward compatibility
             'role' => $this->roles->first()->name ?? null,
+
+            // Include roles array untuk frontend (untuk tampilan Users with Roles)
+            // Always include roles, even if not eager loaded (Spatie Permission will load it automatically)
+            'roles' => $this->roles->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ];
+            })->values()->all(),
 
             // Informasi tambahan untuk Klien B2B [Ref Proposal: Ruang Lingkup Admin]
             'company_name' => $this->company_name,

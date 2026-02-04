@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         // 1. Ambil Role dari Database (Termasuk Super Admin)
         $superAdminRole = Role::where('name', 'Super Admin')->first();
         $adminRole = Role::where('name', 'Admin')->first();
-        $anggotaRole = Role::where('name', 'Anggota')->first();
+        $clientRole = Role::where('name', 'Client')->first();
 
         // --- [BARU] Buat 1 Akun Super Admin (Owner) ---
         // Akun ini yang nanti punya akses Godmode & Activity Log
@@ -54,21 +54,21 @@ class UserSeeder extends Seeder
 
         // --- [LAMA] Buat 10 Akun Klien B2B (Logika Factory Tetap) ---
         // Menggunakan Spatie Permission role relationship
-        $existingKlienCount = User::whereHas('roles', function ($query) use ($anggotaRole) {
-            if ($anggotaRole) {
-                $query->where('name', $anggotaRole->name);
+        $existingKlienCount = User::whereHas('roles', function ($query) use ($clientRole) {
+            if ($clientRole) {
+                $query->where('name', $clientRole->name);
             }
         })->count();
         $neededKlienCount = max(0, 10 - $existingKlienCount);
 
         if ($neededKlienCount > 0) {
-            if ($anggotaRole) {
+            if ($clientRole) {
                 User::factory()->count($neededKlienCount)->create([
                     // Role dihapus - menggunakan Spatie Permission
                     'status' => 'Aktif',
-                ])->each(function ($user) use ($anggotaRole) {
-                    if (!$user->hasRole($anggotaRole)) {
-                        $user->assignRole($anggotaRole);
+                ])->each(function ($user) use ($clientRole) {
+                    if (!$user->hasRole($clientRole)) {
+                        $user->assignRole($clientRole);
                     }
                 });
             } else {
@@ -78,7 +78,7 @@ class UserSeeder extends Seeder
                 ]);
             }
         } else {
-            $this->command->info("Sudah ada {$existingKlienCount} user dengan role Anggota. Tidak perlu membuat user baru.");
+            $this->command->info("Sudah ada {$existingKlienCount} user dengan role Client. Tidak perlu membuat user baru.");
         }
     }
 }

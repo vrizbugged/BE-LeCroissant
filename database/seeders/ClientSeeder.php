@@ -13,9 +13,9 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ambil semua user dengan role Anggota menggunakan Spatie Permission
+        // Ambil semua user dengan role Client menggunakan Spatie Permission
         $klienUsers = User::whereHas('roles', function ($query) {
-            $query->where('name', 'Anggota');
+            $query->where('name', 'Client');
         })->get();
 
         if ($klienUsers->isEmpty()) {

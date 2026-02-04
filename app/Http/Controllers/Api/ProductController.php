@@ -91,7 +91,7 @@ class ProductController extends Controller
             'name' => $validated['nama_produk'],
             'description' => $validated['deskripsi'],
             'price_b2b' => $validated['harga_grosir'],
-            'stock' => $validated['ketersediaan_stok'],
+            'min_order' => $validated['min_order'] ?? 10,
             'status' => $validated['status'] ?? 'Aktif',
         ];
 
@@ -153,7 +153,7 @@ class ProductController extends Controller
         if (isset($validated['nama_produk'])) $data['name'] = $validated['nama_produk'];
         if (isset($validated['deskripsi'])) $data['description'] = $validated['deskripsi'];
         if (isset($validated['harga_grosir'])) $data['price_b2b'] = $validated['harga_grosir'];
-        if (isset($validated['ketersediaan_stok'])) $data['stock'] = $validated['ketersediaan_stok'];
+        if (isset($validated['min_order'])) $data['min_order'] = $validated['min_order'];
         if (isset($validated['status'])) $data['status'] = $validated['status'];
 
         // 3. Update Data Text Dulu via Service

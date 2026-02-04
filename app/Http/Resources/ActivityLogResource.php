@@ -140,7 +140,7 @@ class ActivityLogResource extends JsonResource
         } elseif (isset($properties['attributes'])) {
             // If only attributes (created event)
             $attributes = is_array($properties['attributes']) ? $properties['attributes'] : (is_object($properties['attributes']) ? (array) $properties['attributes'] : []);
-            $trackedFields = ['name', 'price_b2b', 'stock', 'status', 'total_price', 'delivery_date', 'company_name', 'business_sector', 'role'];
+            $trackedFields = ['name', 'price_b2b', 'min_order', 'status', 'total_price', 'delivery_date', 'company_name', 'business_sector', 'role'];
             foreach ($attributes as $field => $value) {
                 // Only show fields that we're tracking
                 if (in_array($field, $trackedFields)) {
@@ -200,8 +200,7 @@ class ActivityLogResource extends JsonResource
             'nama_produk' => 'Nama Produk',
             'price_b2b' => 'Harga B2B',
             'harga_grosir' => 'Harga Grosir',
-            'stock' => 'Stok',
-            'ketersediaan_stok' => 'Ketersediaan Stok',
+            'min_order' => 'Minimal Order',
             'status' => 'Status',
             'total_price' => 'Total Harga',
             'delivery_date' => 'Tanggal Pengiriman',

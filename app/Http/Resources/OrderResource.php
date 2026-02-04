@@ -50,6 +50,9 @@ class OrderResource extends JsonResource
 
             'notes' => $this->notes,
             'admin_notes' => $this->admin_notes,
+            
+            // Payment Proof URL (from Spatie Media Library)
+            'payment_proof_url' => $this->getFirstMediaUrl('payment_proofs'),
         ];
     }
 }

@@ -27,7 +27,7 @@ class ClientStoreRequest extends FormRequest
 
             // Data Bisnis B2B [Ref Proposal: 109, 329]
             'company_name' => 'required|string|max:255',
-            'business_sector' => 'required|in:Hotel,Restoran,Event Organizer,Perusahaan Lain',
+            'business_sector' => 'nullable|string|max:255',
             'address' => 'required|string',
 
             'status' => 'required|in:Pending,Aktif,Non Aktif',

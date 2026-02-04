@@ -24,15 +24,14 @@ class DashboardController extends Controller
         $pendingOrders = Order::where('status', 'menunggu_konfirmasi')
             ->count();
 
-        // Produk aktif (asumsi produk dengan stock > 0 adalah aktif)
-        // Jika ada field status di products, gunakan itu
-        $activeProducts = Product::where('stock', '>', 0)
+        // Produk aktif (berdasarkan status)
+        $activeProducts = Product::where('status', 'Aktif')
             ->count();
 
-        // Total klien B2B (users dengan role Anggota yang status Aktif)
+        // Total klien B2B (users dengan role Client yang status Aktif)
         // Menggunakan Spatie Permission role relationship
         $totalClients = User::whereHas('roles', function ($query) {
-                $query->where('name', 'Anggota');
+                $query->where('name', 'Client');
             })
             ->where('status', 'Aktif')
             ->count();

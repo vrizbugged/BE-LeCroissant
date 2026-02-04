@@ -26,7 +26,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->paginate($perPage);
+        $users = $query->with('roles')->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -42,6 +42,7 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $user->load('roles');
         return response()->json([
             'success' => true,
             'data' => $user,

@@ -30,9 +30,16 @@ class OrderController extends Controller
 
         $orders = $query->paginate($request->query('per_page', 15));
 
+        // Tambahkan payment_proof_url ke setiap order
+        $ordersData = $orders->getCollection()->map(function ($order) {
+            $orderArray = $order->toArray();
+            $orderArray['payment_proof_url'] = $order->getFirstMediaUrl('payment_proofs');
+            return $orderArray;
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $orders->items(),
+            'data' => $ordersData->values()->all(),
             'meta' => [
                 'current_page' => $orders->currentPage(),
                 'per_page' => $orders->perPage(),
@@ -68,9 +75,16 @@ class OrderController extends Controller
             ->orderByDesc('created_at')
             ->paginate($request->query('per_page', 15));
 
+        // Tambahkan payment_proof_url ke setiap order
+        $ordersData = $orders->getCollection()->map(function ($order) {
+            $orderArray = $order->toArray();
+            $orderArray['payment_proof_url'] = $order->getFirstMediaUrl('payment_proofs');
+            return $orderArray;
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $orders->items(),
+            'data' => $ordersData->values()->all(),
             'meta' => [
                 'current_page' => $orders->currentPage(),
                 'per_page' => $orders->perPage(),
@@ -85,17 +99,17 @@ class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $minPurchaseQuantity = 10;
-
         $validated = $request->validate([
             'phone_number' => ['required', 'string', 'min:1'],
             'address' => ['required', 'string', 'min:1'],
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'business_sector' => ['nullable', 'string', 'max:255'],
             'delivery_date' => ['nullable', 'date', 'after:today'],
             'special_notes' => ['nullable', 'string', 'max:500'],
             'payment_proof' => ['required', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'], // Max 5MB, required
             'products' => ['required', 'array', 'min:1'],
             'products.*.id' => ['required', 'exists:products,id'],
-            'products.*.quantity' => ['required', 'integer', 'min:' . $minPurchaseQuantity],
+            'products.*.quantity' => ['required', 'integer', 'min:1'], // Minimum 1, actual min_order will be validated per product
         ], [
             'phone_number.required' => 'Nomor telepon wajib diisi',
             'phone_number.min' => 'Nomor telepon tidak boleh kosong',
@@ -112,7 +126,7 @@ class OrderController extends Controller
             'products.*.id.exists' => 'Produk tidak ditemukan',
             'products.*.quantity.required' => 'Jumlah produk wajib diisi',
             'products.*.quantity.integer' => 'Jumlah produk harus berupa angka',
-            'products.*.quantity.min' => 'Minimal pembelian adalah ' . $minPurchaseQuantity . ' unit per produk',
+            'products.*.quantity.min' => 'Jumlah produk minimal 1 unit',
         ]);
 
         // Set default delivery_date jika tidak dikirim (7 hari dari sekarang)
@@ -124,34 +138,55 @@ class OrderController extends Controller
         $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
         if (!$client) {
             // Create client if doesn't exist with data from request
+            $companyName = isset($validated['company_name']) 
+                ? (trim($validated['company_name']) ?: null)
+                : ($request->user()->company_name ?? null);
+            
+            $businessSector = isset($validated['business_sector']) 
+                ? (trim($validated['business_sector']) ?: null)
+                : ($request->user()->business_sector ?? null);
+            
             $client = \App\Models\Client::create([
                 'user_id' => $request->user()->id,
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
                 'phone_number' => $validated['phone_number'],
                 'address' => $validated['address'],
-                'company_name' => $request->user()->company_name ?? null,
-                'business_sector' => $request->user()->business_sector ?? 'Perusahaan Lain',
+                'company_name' => $companyName,
+                'business_sector' => $businessSector,
                 'status' => 'Aktif',
             ]);
         } else {
-            // Update client with new phone_number and address from request
-            $client->update([
+            // Update client with new data from request
+            $updateData = [
                 'phone_number' => $validated['phone_number'],
                 'address' => $validated['address'],
-            ]);
+            ];
+            
+            // Update company_name if provided (convert empty string to null)
+            if (isset($validated['company_name'])) {
+                $updateData['company_name'] = trim($validated['company_name']) ?: null;
+            }
+            
+            // Update business_sector if provided (convert empty string to null)
+            if (isset($validated['business_sector'])) {
+                $updateData['business_sector'] = trim($validated['business_sector']) ?: null;
+            }
+            
+            $client->update($updateData);
         }
 
-        // Validasi stock tersedia sebelum membuat order
+        // Validasi produk sebelum membuat order
         $productsToValidate = [];
         foreach ($validated['products'] as $product) {
             $productModel = \App\Models\Product::findOrFail($product['id']);
-
-            // Validasi stock tersedia
-            if ($productModel->stock < $product['quantity']) {
+            
+            // Validasi min_order dari produk
+            $minOrder = $productModel->min_order ?? 1;
+            if ($product['quantity'] < $minOrder) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Stok produk '{$productModel->name}' tidak mencukupi. Stok tersedia: {$productModel->stock} unit, yang diminta: {$product['quantity']} unit",
+                    'message' => "Minimum purchase for product '{$productModel->nama_produk}' is {$minOrder} units. You ordered {$product['quantity']} units.",
                 ], 422);
             }
 
@@ -175,7 +210,7 @@ class OrderController extends Controller
                 'total_price' => 0,
             ]);
 
-            // Attach products, hitung total, dan update stock
+            // Attach products dan hitung total
             $totalPrice = 0;
             foreach ($productsToValidate as $item) {
                 $productModel = $item['model'];
@@ -187,9 +222,6 @@ class OrderController extends Controller
                     'quantity' => $product['quantity'],
                     'price_at_purchase' => $priceAtPurchase,
                 ]);
-
-                // Update stock (decrease)
-                $productModel->decrement('stock', $product['quantity']);
 
                 $totalPrice += $priceAtPurchase * $product['quantity'];
             }
@@ -205,10 +237,13 @@ class OrderController extends Controller
 
             DB::commit();
 
+            $orderData = $order->load(['client', 'client.user', 'products'])->toArray();
+            $orderData['payment_proof_url'] = $order->getFirstMediaUrl('payment_proofs');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order berhasil dibuat',
-                'data' => $order->load(['client', 'client.user', 'products']),
+                'data' => $orderData,
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -234,9 +269,12 @@ class OrderController extends Controller
             ], 404);
         }
 
+        $orderData = $order->toArray();
+        $orderData['payment_proof_url'] = $order->getFirstMediaUrl('payment_proofs');
+
         return response()->json([
             'success' => true,
-            'data' => $order,
+            'data' => $orderData,
         ]);
     }
 
@@ -265,10 +303,13 @@ class OrderController extends Controller
 
         $order->update($validated);
 
+        $orderData = $order->fresh()->load(['client', 'client.user', 'products', 'invoice'])->toArray();
+        $orderData['payment_proof_url'] = $order->fresh()->getFirstMediaUrl('payment_proofs');
+
         return response()->json([
             'success' => true,
             'message' => 'Order berhasil diperbarui',
-            'data' => $order->fresh()->load(['client', 'client.user', 'products', 'invoice']),
+            'data' => $orderData,
         ]);
     }
 
@@ -331,10 +372,14 @@ class OrderController extends Controller
 
         $order->update($updateData);
 
+        $freshOrder = $order->fresh()->load(['client', 'client.user', 'products', 'invoice']);
+        $orderData = $freshOrder->toArray();
+        $orderData['payment_proof_url'] = $freshOrder->getFirstMediaUrl('payment_proofs');
+
         return response()->json([
             'success' => true,
             'message' => 'Status order berhasil diperbarui',
-            'data' => $order->fresh()->load(['user', 'products', 'invoice']),
+            'data' => $orderData,
         ]);
     }
 
@@ -349,6 +394,13 @@ class OrderController extends Controller
         $orders = Order::whereBetween('created_at', [$startDate, $endDate . ' 23:59:59'])
             ->with(['client', 'client.user', 'products'])
             ->get();
+
+        // Tambahkan payment_proof_url ke setiap order
+        $ordersData = $orders->map(function ($order) {
+            $orderArray = $order->toArray();
+            $orderArray['payment_proof_url'] = $order->getFirstMediaUrl('payment_proofs');
+            return $orderArray;
+        });
 
         $totalRevenue = $orders->sum('total_price');
         $totalOrders = $orders->count();
@@ -366,7 +418,7 @@ class OrderController extends Controller
                     'completed_orders' => $completedOrders,
                     'total_revenue' => $totalRevenue,
                 ],
-                'orders' => $orders,
+                'orders' => $ordersData->values()->all(),
             ],
         ]);
     }

@@ -36,7 +36,7 @@ class ProductUpdateRequest extends FormRequest
             ],
             'deskripsi' => 'required|string',
             'harga_grosir' => 'required|numeric|min:0',
-            'ketersediaan_stok' => 'required|integer|min:0',
+            'min_order' => 'nullable|integer|min:1', // Minimal order per produk
 
             // --- PERBAIKAN DI SINI ---
             // Ubah 'gambar' menjadi 'image' agar sesuai dengan Controller & Spatie

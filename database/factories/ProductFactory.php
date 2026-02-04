@@ -22,7 +22,7 @@ class ProductFactory extends Factory
             'description' => fake()->paragraph(2),
             // Harga B2B palsu antara 10,000 dan 100,000
             'price_b2b' => fake()->numberBetween(10000, 100000),
-            'stock' => fake()->numberBetween(50, 200),
+            'min_order' => fake()->numberBetween(10, 50), // Minimal order antara 10-50
             'image_url' => 'https://via.placeholder.com/640x480.png?text=Le+Croissant+Product',
         ];
     }

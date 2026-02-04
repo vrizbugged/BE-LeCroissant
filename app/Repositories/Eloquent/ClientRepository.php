@@ -89,13 +89,13 @@ class ClientRepository implements ClientRepositoryInterface
     {
         $client = $this->model->create($data);
 
-        // Jika ada user_id, assign Spatie role 'Anggota' untuk permission management
+        // Jika ada user_id, assign Spatie role 'Client' untuk permission management
         if ($client->user_id) {
             $user = $client->user;
             if ($user) {
-                $anggotaRole = \Spatie\Permission\Models\Role::where('name', 'Anggota')->first();
-                if ($anggotaRole) {
-                    $user->assignRole($anggotaRole);
+                $clientRole = \Spatie\Permission\Models\Role::where('name', 'Client')->first();
+                if ($clientRole) {
+                    $user->assignRole($clientRole);
                 }
             }
         }

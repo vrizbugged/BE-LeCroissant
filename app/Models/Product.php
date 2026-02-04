@@ -21,7 +21,7 @@ class Product extends Model implements HasMedia
         'name',
         'description',
         'price_b2b',
-        'stock',
+        'min_order',
         'status',
     ];
     
@@ -50,14 +50,6 @@ class Product extends Model implements HasMedia
     }
     
     /**
-     * Accessor untuk ketersediaan_stok (mapping ke stock)
-     */
-    public function getKetersediaanStokAttribute()
-    {
-        return $this->stock;
-    }
-    
-    /**
      * Accessor untuk gambar (mapping ke image_url)
      */
     public function getGambarAttribute()
@@ -82,7 +74,7 @@ class Product extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'price_b2b', 'stock', 'status'])
+            ->logOnly(['name', 'price_b2b', 'min_order', 'status'])
             ->logOnlyDirty()
             ->setDescriptionForEvent(fn(string $eventName) => "Product {$eventName} - {$this->name}");
     }

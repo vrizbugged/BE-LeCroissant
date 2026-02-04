@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('image_url');
+            $table->integer('min_order')->default(10)->after('price_b2b');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('image_url')->nullable();
+            $table->dropColumn('min_order');
         });
     }
 };
