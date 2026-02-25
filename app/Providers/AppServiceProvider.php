@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 
@@ -90,5 +91,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Mengatasi masalah panjang string index pada MySQL versi lama
         Schema::defaultStringLength(191);
+
+        ResetPassword::createUrlUsing(function (object $user, string $token): string {
+            $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
+            $email = urlencode($user->getEmailForPasswordReset());
+
+            return "{$frontendUrl}/reset-password?token={$token}&email={$email}";
+        });
     }
 }

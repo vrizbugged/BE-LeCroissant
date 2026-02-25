@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\UserController;
@@ -25,6 +26,8 @@ use App\Http\Controllers\Api\ActivityLogController;
 Route::middleware(['throttle:6,1'])->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/register', [AuthController::class, 'register'])->name('register');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('api.password.email');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('api.password.update');
 });
     // --- PERBAIKAN: Route Produk Dipindah Kesini ---
     // Siapapun (Tamu/User) bisa melihat daftar & detail produk

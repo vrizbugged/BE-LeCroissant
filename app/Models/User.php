@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomResetPasswordNotification;
 // Import-import ini kemungkinan sudah ada di file asli Anda
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Laravel\Fortify\TwoFactorAuthenticatable; // <-- PENTING
@@ -70,5 +71,10 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasManyThrough(Order::class, Client::class, 'user_id', 'client_id', 'id', 'id');
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new CustomResetPasswordNotification($token));
     }
 }
