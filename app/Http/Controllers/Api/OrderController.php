@@ -301,7 +301,29 @@ class OrderController extends Controller
             'cancellation_reason.required_if' => 'Alasan pembatalan wajib diisi saat membatalkan pesanan.',
         ]);
 
-        $order->update($validated);
+        $updateData = $validated;
+
+        if (isset($validated['status'])) {
+            if ($validated['status'] === 'selesai') {
+                $updateData['admin_completed_at'] = now();
+                if (!$order->client_picked_up_at) {
+                    $updateData['completed_by'] = 'admin';
+                }
+            } elseif ($validated['status'] === 'siap_di_pickup') {
+                $updateData['pickup_ready_at'] = now();
+            } else {
+                $updateData['completed_by'] = null;
+                $updateData['admin_completed_at'] = null;
+                $updateData['client_picked_up_at'] = null;
+                $updateData['pickup_ready_at'] = null;
+            }
+
+            if ($validated['status'] !== 'dibatalkan') {
+                $updateData['cancellation_reason'] = null;
+            }
+        }
+
+        $order->update($updateData);
 
         $orderData = $order->fresh()->load(['client', 'client.user', 'products', 'invoice'])->toArray();
         $orderData['payment_proof_url'] = $order->fresh()->getFirstMediaUrl('payment_proofs');
@@ -365,9 +387,26 @@ class OrderController extends Controller
         // Jika status dibatalkan, wajib ada cancellation_reason
         if ($validated['status'] === 'dibatalkan' && isset($validated['cancellation_reason'])) {
             $updateData['cancellation_reason'] = $validated['cancellation_reason'];
-        } elseif ($validated['status'] !== 'dibatalkan') {
+            $updateData['completed_by'] = null;
+            $updateData['admin_completed_at'] = null;
+            $updateData['client_picked_up_at'] = null;
+            $updateData['pickup_ready_at'] = null;
+        } elseif ($validated['status'] === 'selesai') {
+            $updateData['admin_completed_at'] = now();
+            if (!$order->client_picked_up_at) {
+                $updateData['completed_by'] = 'admin';
+            }
+            $updateData['cancellation_reason'] = null;
+        } elseif ($validated['status'] === 'siap_di_pickup') {
+            $updateData['cancellation_reason'] = null;
+            $updateData['pickup_ready_at'] = now();
+        } else {
             // Jika status berubah dari dibatalkan ke status lain, hapus cancellation_reason
             $updateData['cancellation_reason'] = null;
+            $updateData['completed_by'] = null;
+            $updateData['admin_completed_at'] = null;
+            $updateData['client_picked_up_at'] = null;
+            $updateData['pickup_ready_at'] = null;
         }
 
         $order->update($updateData);
@@ -379,6 +418,61 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status order berhasil diperbarui',
+            'data' => $orderData,
+        ]);
+    }
+
+    public function confirmPickup(Request $request, string $id): JsonResponse
+    {
+        $client = \App\Models\Client::where('user_id', $request->user()->id)->first();
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Client profile tidak ditemukan',
+            ], 404);
+        }
+
+        $order = Order::where('id', $id)
+            ->where('client_id', $client->id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order tidak ditemukan',
+            ], 404);
+        }
+
+        if ($order->status === 'dibatalkan') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order dibatalkan, tidak bisa konfirmasi pickup',
+            ], 422);
+        }
+
+        if (!in_array($order->status, ['siap_di_pickup', 'selesai'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order belum siap untuk di-pickup',
+            ], 422);
+        }
+
+        $order->update([
+            'status' => 'selesai',
+            'completed_by' => 'client',
+            'client_picked_up_at' => now(),
+            'pickup_ready_at' => $order->pickup_ready_at ?? now(),
+            'cancellation_reason' => null,
+        ]);
+
+        $freshOrder = $order->fresh()->load(['client', 'client.user', 'products', 'invoice']);
+        $orderData = $freshOrder->toArray();
+        $orderData['payment_proof_url'] = $freshOrder->getFirstMediaUrl('payment_proofs');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konfirmasi pickup berhasil',
             'data' => $orderData,
         ]);
     }
@@ -423,4 +517,3 @@ class OrderController extends Controller
         ]);
     }
 }
-

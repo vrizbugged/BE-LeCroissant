@@ -27,7 +27,6 @@ class ClientService implements ClientServiceInterface
 
     /**
      * Mengambil semua klien B2B.
-     * [Ref Proposal: Menyediakan pengelolaan data pemesanan B2B yang terpusat] [cite: 93]
      * * @return Collection
      */
     public function getAllClients()
@@ -47,7 +46,6 @@ class ClientService implements ClientServiceInterface
 
     /**
      * Mengambil klien berdasarkan sektor bisnis (Hotel, Restoran, EO).
-     * [Ref Proposal: Mengklasifikasikan responden berdasarkan sektor bisnis] [cite: 330]
      * * @param string $sector
      * @return Collection
      */
@@ -76,7 +74,6 @@ class ClientService implements ClientServiceInterface
     public function createClient(array $data)
     {
         // Set default status ke 'Pending' jika tidak disediakan
-        // Sesuai alur B2B yang membutuhkan verifikasi Admin
         if (!isset($data['status'])) {
             $data['status'] = 'Pending';
         }
@@ -97,7 +94,6 @@ class ClientService implements ClientServiceInterface
 
     /**
      * Verifikasi akun klien B2B agar dapat mulai memesan.
-     * [Ref Proposal: Dapat melihat dan memverifikasi pesanan/klien B2B] [cite: 107, 109]
      * * @param int $id
      * @param string|null $verifiedAt
      * @return Client|null
@@ -119,7 +115,7 @@ class ClientService implements ClientServiceInterface
     public function suspendClientAccount($id, $reason = null)
     {
         $data = ['status' => 'Non Aktif'];
-        
+
         // Jika ada alasan, bisa disimpan di field notes atau suspended_reason (jika ada)
         // Untuk saat ini, cukup update status saja
 
@@ -128,7 +124,6 @@ class ClientService implements ClientServiceInterface
 
     /**
      * Mengambil laporan ringkasan transaksi klien tertentu.
-     * [Ref Proposal: Dapat mencetak laporan ringkasan pesanan atau transaksi B2B] [cite: 110]
      * * @param int $id
      * @param string $startDate
      * @param string $endDate
@@ -158,7 +153,6 @@ class ClientService implements ClientServiceInterface
 
     /**
      * Mengambil laporan segmentasi pasar (Analisis Pertumbuhan).
-     * [Ref Proposal: Mendukung potensi pertumbuhan bisnis di pasar grosir] [cite: 89]
      * * @param string $startDate
      * @param string $endDate
      * @return array

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,20 +20,25 @@ class DashboardController extends Controller
         $totalRevenue = Order::where('status', 'selesai')
             ->sum('total_price');
 
-        // Pesanan pending (menunggu konfirmasi)
+
+        // Pesanan pending = hanya menunggu konfirmasi admin
         $pendingOrders = Order::where('status', 'menunggu_konfirmasi')
             ->count();
 
-        // Produk aktif (berdasarkan status)
-        $activeProducts = Product::where('status', 'Aktif')
+        // Produk aktif (akomodasi variasi status lama: Aktif / Active)
+        $activeProducts = Product::query()
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(status) = ?', ['aktif'])
+                    ->orWhereRaw('LOWER(status) = ?', ['active']);
+            })
             ->count();
 
-        // Total klien B2B (users dengan role Client yang status Aktif)
-        // Menggunakan Spatie Permission role relationship
-        $totalClients = User::whereHas('roles', function ($query) {
-                $query->where('name', 'Client');
-            })
+        // Total klien B2B aktif dari tabel clients
+        $totalClients = Client::query()
             ->where('status', 'Aktif')
+            ->whereDoesntHave('user.roles', function ($query) {
+                $query->whereIn('name', ['Admin', 'Super Admin']);
+            })
             ->count();
 
         return response()->json([
@@ -56,28 +61,28 @@ class DashboardController extends Controller
         $months = [];
         $revenueData = [];
         $ordersData = [];
-        
+
         // Get data for last 6 months
         for ($i = 5; $i >= 0; $i--) {
             $date = now()->subMonths($i);
             $monthStart = $date->copy()->startOfMonth();
             $monthEnd = $date->copy()->endOfMonth();
-            
+
             $monthName = $date->format('M Y');
             $months[] = $monthName;
-            
+
             // Revenue for completed orders in this month
             $revenue = Order::where('status', 'selesai')
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->sum('total_price');
             $revenueData[] = (float) $revenue;
-            
+
             // Total orders in this month
             $orders = Order::whereBetween('created_at', [$monthStart, $monthEnd])
                 ->count();
             $ordersData[] = $orders;
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -88,4 +93,3 @@ class DashboardController extends Controller
         ]);
     }
 }
-

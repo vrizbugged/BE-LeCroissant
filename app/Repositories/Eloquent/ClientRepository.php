@@ -25,13 +25,24 @@ class ClientRepository implements ClientRepositoryInterface
     }
 
     /**
+     * Base query untuk Client Management:
+     * hanya menampilkan client yang user-nya memiliki role "Client".
+     */
+    protected function clientRoleQuery()
+    {
+        return $this->model->newQuery()
+            ->whereDoesntHave('user.roles', function ($query) {
+                $query->whereIn('name', ['Admin', 'Super Admin']);
+            });
+    }
+
+    /**
      * Mengambil semua klien B2B.
-     * [Ref Proposal: Mengelola data klien B2B]
      * * @return Collection
      */
     public function getAllClients(): Collection
     {
-        return $this->model->all();
+        return $this->clientRoleQuery()->get();
     }
 
     /**
@@ -41,7 +52,7 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientById($id): ?Client
     {
-        return $this->model->find($id);
+        return $this->clientRoleQuery()->find($id);
     }
 
     /**
@@ -52,7 +63,9 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientsBySector($sector): Collection
     {
-        return $this->model->where('business_sector', $sector)->get();
+        return $this->clientRoleQuery()
+            ->where('business_sector', $sector)
+            ->get();
     }
 
     /**
@@ -63,7 +76,9 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientsByStatus($status): Collection
     {
-        return $this->model->where('status', $status)->get();
+        return $this->clientRoleQuery()
+            ->where('status', $status)
+            ->get();
     }
 
 
@@ -75,9 +90,10 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientByEmailAndStatus($email, $status): ?Client
     {
-        return $this->model->where('email', $email)
-                           ->where('status', $status)
-                           ->first();
+        return $this->clientRoleQuery()
+            ->where('email', $email)
+            ->where('status', $status)
+            ->first();
     }
 
     /**

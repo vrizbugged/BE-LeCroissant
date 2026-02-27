@@ -29,7 +29,7 @@ class ProductStoreRequest extends FormRequest
                 Rule::unique('products', 'name'),
             ],
             'deskripsi' => 'required|string',
-            'harga_grosir' => 'required|numeric|min:0', // Sesuai kebutuhan harga B2B
+            'harga_grosir' => 'required|numeric|gt:0', // Sesuai kebutuhan harga B2B
             'min_order' => 'nullable|integer|min:1', // Minimal order per produk
             'gambar' => 'nullable', // Bisa file image atau URL string
             // Validasi file akan dilakukan di controller (image|mimes:jpeg,png,jpg|max:2048 jika file)

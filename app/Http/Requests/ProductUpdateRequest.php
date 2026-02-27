@@ -35,7 +35,7 @@ class ProductUpdateRequest extends FormRequest
                 Rule::unique('products', 'name')->ignore($productId),
             ],
             'deskripsi' => 'required|string',
-            'harga_grosir' => 'required|numeric|min:0',
+            'harga_grosir' => 'required|numeric|gt:0',
             'min_order' => 'nullable|integer|min:1', // Minimal order per produk
 
             // --- PERBAIKAN DI SINI ---

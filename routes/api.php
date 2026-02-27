@@ -121,6 +121,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Route Khusus Klien
     Route::post('orders', [OrderController::class, 'store']);
     Route::get('my-orders', [OrderController::class, 'myOrders']);
+    Route::patch('my-orders/{id}/confirm-pickup', [OrderController::class, 'confirmPickup']);
 
     // Route Khusus Admin
     Route::middleware('permission:mengelola orders')->group(function () {

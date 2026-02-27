@@ -21,9 +21,19 @@ class Order extends Model implements HasMedia
         'client_id',      // Relasi ke Client (menggantikan user_id)
         'delivery_date',
         'status',
+        'completed_by', // Ditentukan oleh admin/client saat status selesai
+        'admin_completed_at',
+        'client_picked_up_at',
+        'pickup_ready_at',
         'cancellation_reason', // Alasan pembatalan pesanan
         'total_price',
         'special_notes',
+    ];
+
+    protected $casts = [
+        'admin_completed_at' => 'datetime',
+        'client_picked_up_at' => 'datetime',
+        'pickup_ready_at' => 'datetime',
     ];
 
     /**
