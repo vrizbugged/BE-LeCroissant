@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\OrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class OrderController extends Controller
 {
@@ -515,5 +517,31 @@ class OrderController extends Controller
                 'orders' => $ordersData->values()->all(),
             ],
         ]);
+    }
+
+    /**
+     * Export laporan order ke file Excel (.xlsx) dengan style rapi.
+     */
+    public function export(Request $request)
+    {
+        $query = Order::with(['client', 'user', 'products'])->orderByDesc('created_at');
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59']);
+        }
+
+        $orders = $query->get();
+        $date = now()->format('Y-m-d');
+        $suffix = $status ? "-{$status}" : '';
+        $filename = "orders-report-{$date}{$suffix}.xlsx";
+
+        return Excel::download(new OrdersExport($orders), $filename);
     }
 }
